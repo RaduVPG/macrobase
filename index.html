@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MacroBase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:#0a0a0a; --surface:#111; --surface2:#161616; --surface3:#1e1e1e;
+  --border:#282828; --border2:#353535; --border3:#404040;
+  --text:#f0ede8; --text2:#aaa9a2; --text3:#777770; --text4:#555550;
+  --accent:#e8d5a0; --accent2:#c4a96e; --accent3:#8a6e3a;
+  --cal:#ff6b35; --pro:#4ecdc4; --fat:#ffe66d; --carb:#a8e6cf; --fib:#c3b1e1; --sug:#ff9eb5;
+  --radius:0px;
+  --trans:all 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── CANVAS BG ── */
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.6}
+
+/* ── GRID OVERLAY ── */
+.grid-overlay{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(232,213,160,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(232,213,160,0.025) 1px,transparent 1px);
+  background-size:64px 64px;
+  animation:gridPulse 8s ease-in-out infinite;
+}
+@keyframes gridPulse{0%,100%{opacity:0.6}50%{opacity:1}}
+
+/* ── NOISE ── */
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+.wrapper{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* ══════════════════════════════════
+   HEADER
+══════════════════════════════════ */
+header{
+  padding:56px 0 36px;
+  border-bottom:1px solid var(--border2);
+  margin-bottom:44px;
+  position:relative;
+}
+
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+
+.logo-block{overflow:hidden}
+.logo-eyebrow{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.35em;
+  color:var(--accent2);text-transform:uppercase;margin-bottom:8px;
+  animation:fadeSlideDown 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+}
+.logo-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(56px,9vw,96px);
+  line-height:0.88;letter-spacing:0.02em;
+  animation:fadeSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.15s both;
+}
+.logo-title .accent{color:var(--accent)}
+.logo-sub{
+  font-size:13px;color:var(--text3);margin-top:12px;font-weight:300;
+  font-family:'DM Mono',monospace;letter-spacing:0.05em;
+  animation:fadeSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.25s both;
+}
+
+/* ── HEADER RIGHT ── */
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:20px;flex-shrink:0}
+
+.header-counter{
+  text-align:right;
+  animation:fadeSlideDown 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+}
+.counter-num{
+  font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);line-height:1;
+  display:block;
+}
+.counter-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.25em;
+  color:var(--text3);text-transform:uppercase;
+}
+
+/* ── LANGUAGE TOGGLE ── */
+.lang-toggle{
+  display:flex;align-items:center;gap:2px;
+  background:var(--surface);border:1px solid var(--border2);
+  padding:3px;position:relative;
+  animation:fadeSlideDown 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both;
+}
+.lang-btn{
+  background:none;border:none;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;
+  color:var(--text3);text-transform:uppercase;
+  padding:8px 16px;cursor:pointer;
+  position:relative;z-index:2;
+  transition:color 0.25s;
+}
+.lang-btn.active{color:var(--bg)}
+.lang-slider{
+  position:absolute;top:3px;left:3px;bottom:3px;
+  background:var(--accent);
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1),width 0.3s cubic-bezier(0.16,1,0.3,1);
+  z-index:1;
+  width:calc(50% - 3px);
+}
+.lang-toggle[data-lang="ro"] .lang-slider{transform:translateX(calc(100% + 0px))}
+
+@keyframes fadeSlideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TICKER LINE ── */
+.ticker-line{
+  position:relative;overflow:hidden;height:28px;
+  border-top:1px solid var(--border);
+  margin-top:20px;
+  animation:fadeIn 1s 0.5s both;
+}
+.ticker-inner{
+  display:flex;gap:0;white-space:nowrap;
+  animation:tickerScroll 60s linear infinite;
+  height:100%;align-items:center;
+}
+.ticker-inner:hover{animation-play-state:paused}
+.ticker-item{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+  color:var(--text3);text-transform:uppercase;
+  padding:0 24px;border-right:1px solid var(--border2);height:100%;
+  display:flex;align-items:center;
+  transition:color 0.2s;
+}
+.ticker-item:hover{color:var(--accent2)}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ══════════════════════════════════
+   SEARCH
+══════════════════════════════════ */
+.search-section{
+  margin-bottom:36px;
+  animation:fadeSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.35s both;
+}
+
+.search-wrap{position:relative;display:flex;align-items:center}
+
+.search-icon{
+  position:absolute;left:20px;
+  font-size:20px;color:var(--text4);pointer-events:none;
+  font-family:'DM Mono',monospace;
+  transition:color 0.25s,transform 0.25s;
+}
+.search-wrap:focus-within .search-icon{
+  color:var(--accent2);transform:scale(1.1);
+}
+
+#searchInput{
+  width:100%;background:var(--surface);
+  border:1px solid var(--border2);
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:18px;font-weight:300;
+  padding:20px 20px 20px 52px;
+  outline:none;
+  transition:border-color 0.25s,box-shadow 0.25s,background 0.25s;
+  -webkit-appearance:none;
+}
+#searchInput::placeholder{color:var(--text4)}
+#searchInput:focus{
+  border-color:var(--accent2);
+  box-shadow:0 0 0 1px var(--accent2),0 8px 40px rgba(196,169,110,0.08);
+  background:var(--surface2);
+}
+
+/* animated underline */
+.search-underline{
+  height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--pro));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  margin-top:-1px;
+}
+.search-wrap:focus-within ~ .search-underline{transform:scaleX(1)}
+
+.search-clear{
+  position:absolute;right:18px;background:none;border:none;
+  color:var(--text3);cursor:pointer;
+  width:28px;height:28px;display:none;
+  align-items:center;justify-content:center;font-size:18px;
+  transition:color 0.2s,transform 0.2s,opacity 0.2s;
+  opacity:0;
+}
+.search-clear.visible{display:flex;opacity:1}
+.search-clear:hover{color:var(--text);transform:rotate(90deg)}
+
+/* ── FILTERS ── */
+.filters{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;
+}
+
+.chip{
+  background:var(--surface2);
+  border:1px solid var(--border3);
+  color:var(--text2);
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
+  text-transform:uppercase;padding:8px 14px;cursor:pointer;
+  transition:all 0.2s cubic-bezier(0.16,1,0.3,1);
+  position:relative;overflow:hidden;white-space:nowrap;
+}
+.chip::before{
+  content:'';position:absolute;inset:0;
+  background:var(--chip-color,var(--accent));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.25s cubic-bezier(0.16,1,0.3,1);
+  opacity:0.15;
+}
+/* left accent stripe using chip color */
+.chip::after{
+  content:'';position:absolute;top:0;left:0;bottom:0;
+  width:2px;background:var(--chip-color,var(--accent2));
+  opacity:0;transition:opacity 0.2s;
+}
+.chip:hover{
+  border-color:var(--text2);color:var(--text);
+  background:var(--surface3);
+}
+.chip:hover::before{transform:scaleX(1)}
+.chip:hover::after{opacity:1}
+.chip.active{
+  background:var(--accent);border-color:var(--accent);
+  color:var(--bg);font-weight:500;
+}
+.chip.active::before,.chip.active::after{display:none}
+
+/* ══════════════════════════════════
+   RESULTS META
+══════════════════════════════════ */
+.results-meta{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+  animation:fadeIn 0.6s 0.5s both;
+}
+.results-count{
+  font-family:'DM Mono',monospace;font-size:11px;
+  letter-spacing:0.15em;color:var(--text3);text-transform:uppercase;
+}
+.results-count span{color:var(--accent);transition:all 0.3s}
+
+.sort-wrap{display:flex;gap:4px;align-items:center}
+.sort-label{
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);
+  letter-spacing:0.12em;text-transform:uppercase;margin-right:4px;
+}
+.sort-btn{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text3);
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;
+  text-transform:uppercase;padding:6px 10px;cursor:pointer;
+  transition:all 0.2s;
+}
+.sort-btn:hover{border-color:var(--text2);color:var(--text2);background:var(--surface3)}
+.sort-btn.active{border-color:var(--accent2);color:var(--accent);background:var(--surface3)}
+
+/* ══════════════════════════════════
+   GRID & CARDS
+══════════════════════════════════ */
+#resultsGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:2px;margin-bottom:80px;
+}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:26px;cursor:pointer;
+  transition:background 0.2s,border-color 0.2s,transform 0.3s cubic-bezier(0.16,1,0.3,1),box-shadow 0.3s;
+  position:relative;overflow:hidden;
+  will-change:transform;
+}
+
+/* shimmer on hover */
+.card::after{
+  content:'';position:absolute;
+  top:-100%;left:-60%;
+  width:40%;height:300%;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.03) 50%,transparent 60%);
+  transition:transform 0.6s;
+  pointer-events:none;
+}
+.card:hover::after{transform:translateX(400%)}
+
+/* top accent bar */
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--cat-color,var(--accent2));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.card:hover{
+  background:var(--surface2);border-color:var(--border3);
+  transform:translateY(-3px) scale(1.005);
+  box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 0 1px var(--border2);
+  z-index:2;
+}
+.card:hover::before{transform:scaleX(1)}
+
+/* stagger-in animation */
+.card{
+  animation:cardReveal 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes cardReveal{
+  from{opacity:0;transform:translateY(16px) scale(0.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.card-cat{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.22em;
+  color:var(--cat-color,var(--accent2));text-transform:uppercase;
+  margin-bottom:10px;opacity:1;
+}
+.card-name{
+  font-size:15px;font-weight:500;color:var(--text);
+  line-height:1.3;margin-bottom:3px;
+  transition:color 0.2s;
+}
+.card:hover .card-name{color:var(--accent)}
+.card-name-ro{
+  font-size:10px;color:var(--text3);font-style:italic;
+  margin-bottom:18px;font-family:'DM Mono',monospace;
+  min-height:14px;
+  transition:color 0.2s;
+}
+.card:hover .card-name-ro{color:var(--text2)}
+
+.card-kcal-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.card-kcal{
+  font-family:'Bebas Neue',sans-serif;font-size:40px;
+  color:var(--cal);line-height:1;
+  transition:transform 0.2s;
+}
+.card:hover .card-kcal{transform:scale(1.04)}
+.card-kcal-unit{
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.15em;
+}
+.card-kcal-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:18px;
+}
+
+/* MACRO BARS */
+.macro-bars{display:flex;flex-direction:column;gap:8px}
+.macro-row{display:grid;grid-template-columns:58px 1fr 42px;align-items:center;gap:10px}
+.macro-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;
+  color:var(--text3);text-transform:uppercase;
+}
+.macro-bar-track{
+  height:3px;background:var(--border3);overflow:hidden;position:relative;
+}
+.macro-bar-fill{
+  height:100%;background:var(--bar-color);
+  transform-origin:left;transform:scaleX(0);
+  transition:transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  transition-delay:var(--bar-delay,0s);
+}
+.card.in-view .macro-bar-fill{transform:scaleX(1)}
+.macro-val{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--text2);text-align:right;
+}
+
+/* ══════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════ */
+.empty-state{
+  grid-column:1/-1;padding:100px 20px;text-align:center;
+  animation:fadeIn 0.5s both;
+}
+.empty-icon{
+  font-family:'Bebas Neue',sans-serif;font-size:100px;
+  color:var(--border2);line-height:1;margin-bottom:20px;
+  letter-spacing:0.05em;
+}
+.empty-text{
+  font-family:'DM Mono',monospace;font-size:12px;
+  color:var(--text4);letter-spacing:0.18em;text-transform:uppercase;
+}
+
+/* ══════════════════════════════════
+   MODAL
+══════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0);backdrop-filter:blur(0px);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;
+  pointer-events:none;
+  transition:background 0.3s,backdrop-filter 0.3s;
+}
+.modal-overlay.open{
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);pointer-events:all;
+}
+
+.modal{
+  background:var(--surface);border:1px solid var(--border2);
+  max-width:580px;width:100%;max-height:92vh;overflow-y:auto;
+  position:relative;
+  transform:translateY(32px) scale(0.94);opacity:0;
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1),opacity 0.3s;
+}
+.modal-overlay.open .modal{transform:translateY(0) scale(1);opacity:1}
+
+/* modal inner scroll */
+.modal::-webkit-scrollbar{width:3px}
+.modal::-webkit-scrollbar-track{background:transparent}
+.modal::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── MODAL HEADER BG ── */
+.modal-hero{
+  position:relative;padding:36px 36px 0;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.modal-hero-glow{
+  position:absolute;top:-40px;right:-40px;
+  width:240px;height:240px;border-radius:50%;
+  background:var(--cat-color,var(--accent2));
+  opacity:0.07;filter:blur(60px);
+  pointer-events:none;
+  animation:glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{opacity:0.05;transform:scale(1)}50%{opacity:0.1;transform:scale(1.1)}}
+
+.modal-close{
+  position:absolute;top:18px;right:18px;
+  background:none;border:1px solid var(--border2);
+  color:var(--text3);width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;
+  transition:all 0.2s;z-index:2;
+}
+.modal-close:hover{border-color:var(--text2);color:var(--text);background:var(--surface3);transform:rotate(90deg)}
+
+.modal-cat{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.28em;
+  color:var(--cat-color,var(--accent2));text-transform:uppercase;
+  margin-bottom:10px;
+  animation:fadeSlideDown 0.4s 0.05s both;
+}
+.modal-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(40px,7vw,64px);line-height:0.92;
+  margin-bottom:8px;
+  animation:fadeSlideUp 0.45s 0.08s both;
+}
+.modal-name-ro{
+  font-size:13px;color:var(--text3);font-style:italic;
+  font-family:'DM Mono',monospace;margin-bottom:28px;
+  min-height:18px;
+  animation:fadeSlideUp 0.45s 0.12s both;
+}
+
+/* ── MODAL KCAL BADGE ── */
+.modal-kcal-bar{
+  display:flex;align-items:flex-end;gap:16px;padding-bottom:28px;
+  animation:fadeSlideUp 0.45s 0.15s both;
+}
+.modal-kcal-num{
+  font-family:'Bebas Neue',sans-serif;font-size:88px;
+  color:var(--cal);line-height:0.85;
+  position:relative;
+}
+.modal-kcal-num::after{
+  content:'';position:absolute;
+  bottom:4px;left:0;right:0;height:3px;
+  background:var(--cal);opacity:0.3;
+}
+.modal-kcal-meta{padding-bottom:8px}
+.modal-kcal-unit{
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.2em;
+  color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;
+}
+.modal-kcal-per{font-size:11px;color:var(--text4);font-family:'DM Mono',monospace}
+
+/* ── MODAL BODY ── */
+.modal-body{padding:28px 36px 36px}
+
+/* DONUT + LEGEND */
+.macro-visual{
+  display:flex;align-items:center;gap:28px;
+  margin-bottom:20px;padding:22px;
+  background:var(--surface2);border:1px solid var(--border);
+  animation:fadeSlideUp 0.5s 0.2s both;
+}
+.chart-wrap{flex-shrink:0;position:relative;width:120px;height:120px}
+.chart-wrap svg{transform:rotate(-90deg);display:block}
+.chart-center{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.chart-c-num{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--cal);line-height:1;
+}
+.chart-c-lbl{
+  font-family:'DM Mono',monospace;font-size:8px;color:var(--text4);
+  letter-spacing:0.1em;text-transform:uppercase;
+}
+
+.macro-legend{flex:1;display:flex;flex-direction:column;gap:10px}
+.legend-row{
+  display:flex;align-items:center;gap:10px;
+  padding:4px 0;
+  border-bottom:1px solid var(--border2);
+}
+.legend-row:last-child{border-bottom:none}
+.legend-dot{width:8px;height:8px;flex-shrink:0;border-radius:1px}
+.legend-name{
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);
+  flex:1;text-transform:uppercase;letter-spacing:0.1em;
+}
+.legend-g{font-family:'DM Mono',monospace;font-size:10px;color:var(--text)}
+.legend-pct{
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);
+  width:34px;text-align:right;
+}
+
+/* MACRO TILES */
+.tiles-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:2px;
+  animation:fadeSlideUp 0.5s 0.25s both;
+}
+.tiles-grid-3{
+  display:grid;grid-template-columns:1fr 1fr;gap:2px;
+  animation:fadeSlideUp 0.5s 0.3s both;
+}
+.macro-tile{
+  background:var(--surface2);padding:20px 22px;border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.macro-tile::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--tile-color);
+  transform:scaleX(0);transform-origin:left;
+  animation:tileLine 0.8s cubic-bezier(0.16,1,0.3,1) var(--td,0s) both;
+}
+@keyframes tileLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+.macro-tile::after{
+  content:'';position:absolute;bottom:-20px;right:-10px;
+  width:80px;height:80px;border-radius:50%;
+  background:var(--tile-color);opacity:0.04;
+  transition:opacity 0.3s,transform 0.3s;
+}
+.macro-tile:hover::after{opacity:0.08;transform:scale(1.3)}
+
+.tile-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:10px;
+}
+.tile-val{
+  font-family:'Bebas Neue',sans-serif;font-size:42px;
+  color:var(--tile-color);line-height:1;
+}
+.tile-unit{
+  font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);
+}
+.tile-pct{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--text3);margin-top:8px;
+}
+
+/* ── MACRO PROGRESS BARS ── */
+.macro-progress{
+  margin-top:20px;padding:20px 22px;
+  background:var(--surface2);border:1px solid var(--border2);
+  animation:fadeSlideUp 0.5s 0.35s both;
+}
+.progress-title{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:16px;
+}
+.prog-row{
+  display:grid;grid-template-columns:80px 1fr 50px;
+  align-items:center;gap:12px;margin-bottom:12px;
+}
+.prog-row:last-child{margin-bottom:0}
+.prog-label{
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);
+  text-transform:uppercase;letter-spacing:0.1em;
+}
+.prog-track{height:6px;background:var(--border3);position:relative;overflow:hidden}
+.prog-fill{
+  height:100%;background:linear-gradient(90deg,var(--prog-color) 0%,var(--prog-color2,var(--prog-color)) 100%);
+  transform:scaleX(0);transform-origin:left;
+  animation:progGrow 1s cubic-bezier(0.16,1,0.3,1) var(--pd,0s) both;
+}
+@keyframes progGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.prog-val{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--text2);text-align:right;
+}
+
+/* ══════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+@media(max-width:620px){
+  header{padding:36px 0 28px}
+  .header-top{flex-direction:column;gap:16px}
+  .header-right{flex-direction:row;align-items:center;justify-content:space-between;width:100%}
+  .modal-hero{padding:24px 20px 0}
+  .modal-body{padding:20px 20px 28px}
+  .modal-kcal-num{font-size:64px}
+  .tiles-grid,.tiles-grid-3{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="grid-overlay"></div>
+<div class="noise"></div>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-top">
+      <div class="logo-block">
+        <div class="logo-eyebrow" data-en="Nutrition Reference Database" data-ro="Bază de Date Nutriționale">Nutrition Reference Database</div>
+        <div class="logo-title">MACRO<span class="accent">BASE</span></div>
+        <div class="logo-sub" data-en="Per 100g · 873 ingredients · EN / RO" data-ro="Per 100g · 873 ingrediente · EN / RO">Per 100g · 873 ingredients · EN / RO</div>
+      </div>
+      <div class="header-right">
+        <div class="header-counter">
+          <span class="counter-num" id="totalCount">873</span>
+          <span class="counter-label" data-en="ingredients" data-ro="ingrediente">ingredients</span>
+        </div>
+        <!-- LANGUAGE TOGGLE -->
+        <div class="lang-toggle" id="langToggle" data-lang="en">
+          <div class="lang-slider"></div>
+          <button class="lang-btn active" data-lang-btn="en">EN</button>
+          <button class="lang-btn" data-lang-btn="ro">RO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TICKER -->
+    <div class="ticker-line">
+      <div class="ticker-inner" id="tickerInner"></div>
+    </div>
+  </header>
+
+  <!-- SEARCH -->
+  <section class="search-section">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput"
+        data-placeholder-en="Search any ingredient… chicken breast, somon, quinoa, quinoa…"
+        data-placeholder-ro="Caută orice ingredient… piept de pui, somon, quinoa…"
+        placeholder="Search any ingredient… chicken breast, salmon, quinoa…"
+        autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="clearBtn" title="Clear">×</button>
+    </div>
+    <div class="search-underline"></div>
+    <div class="filters" id="filterChips"></div>
+  </section>
+
+  <!-- META -->
+  <div class="results-meta">
+    <div class="results-count" id="resultsCount">
+      <span data-en="Showing" data-ro="Se afișează">Showing</span>
+      <span id="countNum">873</span>
+      <span data-en="ingredients" data-ro="ingrediente">ingredients</span>
+    </div>
+    <div class="sort-wrap">
+      <span class="sort-label" data-en="Sort" data-ro="Sortare">Sort</span>
+      <button class="sort-btn active" data-sort="name" data-en="A–Z" data-ro="A–Z">A–Z</button>
+      <button class="sort-btn" data-sort="kcal" data-en="Cal ↓" data-ro="Cal ↓">Cal ↓</button>
+      <button class="sort-btn" data-sort="protein" data-en="Prot ↓" data-ro="Prot ↓">Prot ↓</button>
+      <button class="sort-btn" data-sort="fat" data-en="Grăs ↓" data-ro="Grăs ↓">Fat ↓</button>
+      <button class="sort-btn" data-sort="carbs" data-en="Carb ↓" data-ro="Carb ↓">Carb ↓</button>
+    </div>
+  </div>
+
+  <div id="resultsGrid"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalCard">
+    <div class="modal-hero">
+      <div class="modal-hero-glow" id="mGlow"></div>
+      <button class="modal-close" id="modalClose">×</button>
+      <div class="modal-cat" id="mCat"></div>
+      <div class="modal-name" id="mName"></div>
+      <div class="modal-name-ro" id="mNameRo"></div>
+      <div class="modal-kcal-bar">
+        <div class="modal-kcal-num" id="mKcal">0</div>
+        <div class="modal-kcal-meta">
+          <span class="modal-kcal-unit">kcal</span>
+          <span class="modal-kcal-per" data-en="per 100g" data-ro="per 100g">per 100g</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <!-- donut -->
+      <div class="macro-visual">
+        <div class="chart-wrap">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#1a1a1a" stroke-width="14"/>
+            <circle id="arcP" cx="60" cy="60" r="50" fill="none" stroke="#4ecdc4" stroke-width="14" stroke-dasharray="0 314" style="transition:stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)"/>
+            <circle id="arcF" cx="60" cy="60" r="50" fill="none" stroke="#ffe66d" stroke-width="14" stroke-dasharray="0 314" style="transition:stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1) 0.1s"/>
+            <circle id="arcC" cx="60" cy="60" r="50" fill="none" stroke="#a8e6cf" stroke-width="14" stroke-dasharray="0 314" style="transition:stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1) 0.2s"/>
+          </svg>
+          <div class="chart-center">
+            <div class="chart-c-num" id="chartKcal">0</div>
+            <div class="chart-c-lbl">kcal</div>
+          </div>
+        </div>
+        <div class="macro-legend" id="macroLegend"></div>
+      </div>
+
+      <!-- tiles -->
+      <div class="tiles-grid" id="tilesTop"></div>
+      <div class="tiles-grid-3" id="tilesBottom"></div>
+
+      <!-- progress bars -->
+      <div class="macro-progress">
+        <div class="progress-title" data-en="Macronutrient Breakdown" data-ro="Detalii Macronutrienți">Macronutrient Breakdown</div>
+        <div id="progressBars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATABASE
+// ═══════════════════════════════════════
+const DB = [{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Agar-agar","r":"Agar-agar","k":306.0,"p":6.2,"f":0.3,"b":80.9,"i":7.7,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Almond flour","r":"Făină de migdale","k":571.0,"p":21.4,"f":50.6,"b":19.9,"i":12.5,"s":4.4},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Apple cider vinegar","r":"Oțet de mere","k":22.0,"p":0,"f":0,"b":0.9,"i":0,"s":0.9},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Arrow root powder","r":"Praf arrowroot","k":357.0,"p":0.3,"f":0.1,"b":88.2,"i":3.4,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Baking powder","r":"Praf de copt","k":53.0,"p":0,"f":0,"b":27.7,"i":0.2,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Baking soda","r":"Bicarbonat de sodiu","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Beer (lager)","r":"Bere (lager)","k":43.0,"p":0.5,"f":0,"b":3.6,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Breadcrumbs","r":"Pesmet","k":395.0,"p":13.4,"f":5.3,"b":72.5,"i":3.8,"s":3.5},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Brown rice flour","r":"Făină de orez brun","k":363.0,"p":7.2,"f":2.7,"b":76.4,"i":3.5,"s":0.8},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Canned tomatoes","r":"Roșii la conservă","k":24.0,"p":1.1,"f":0.2,"b":4.7,"i":1.3,"s":3.2},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Carob powder","r":"Pudră de roșcove","k":222.0,"p":4.6,"f":0.7,"b":88.9,"i":40.1,"s":38.2},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Cassava flour","r":"Făină de manioc","k":357.0,"p":1.5,"f":0.5,"b":86.0,"i":1.8,"s":0.5},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Chicken broth","r":"Supă de pui","k":15.0,"p":1.5,"f":0.2,"b":1.0,"i":0,"s":0.5},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Chickpea flour","r":"Făină de năut","k":387.0,"p":22.4,"f":6.7,"b":57.8,"i":10.8,"s":10.8},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Cocoa powder","r":"Pudră de cacao","k":228.0,"p":19.6,"f":13.7,"b":57.9,"i":33.2,"s":1.8},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Coconut cream","r":"Cremă de cocos","k":330.0,"p":3.5,"f":35.0,"b":6.0,"i":0,"s":3.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Coconut flour","r":"Făină de cocos","k":400.0,"p":18.0,"f":13.0,"b":60.0,"i":38.5,"s":9.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Cornstarch","r":"Amidon de porumb","k":381.0,"p":0.3,"f":0.1,"b":91.3,"i":0.9,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Dark chocolate (70%)","r":"Ciocolată neagră (70%)","k":598.0,"p":7.8,"f":42.6,"b":45.9,"i":10.9,"s":24.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Erythritol","r":"Eritritol","k":20.0,"p":0,"f":0,"b":100.0,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Gelatin (powder)","r":"Gelatină (pudră)","k":335.0,"p":85.6,"f":0.1,"b":0,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Golden syrup","r":"Sirop auriu","k":328.0,"p":0,"f":0,"b":84.2,"i":0,"s":67.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Guar gum","r":"Gumă guar","k":349.0,"p":5.6,"f":0.8,"b":87.6,"i":79.5,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Jam / Fruit preserves","r":"Gem / Dulceață","k":250.0,"p":0.4,"f":0,"b":65.1,"i":1.1,"s":52.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Malt extract","r":"Extract de malț","k":318.0,"p":6.0,"f":0,"b":79.5,"i":0,"s":60.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Milk chocolate","r":"Ciocolată cu lapte","k":535.0,"p":7.6,"f":29.7,"b":59.2,"i":3.4,"s":52.3},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Milk powder (full-fat)","r":"Lapte praf integral","k":496.0,"p":26.3,"f":26.7,"b":38.4,"i":0,"s":38.4},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Nutella (hazelnut spread)","r":"Nutella (cremă alune)","k":546.0,"p":6.3,"f":30.9,"b":57.9,"i":3.0,"s":56.3},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Nutritional yeast","r":"Drojdie nutritivă","k":325.0,"p":50.0,"f":7.0,"b":38.0,"i":25.0,"s":0.7},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Oat flour","r":"Făină de ovăz","k":404.0,"p":14.7,"f":8.8,"b":67.7,"i":6.8,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Pectin (dry)","r":"Pectină uscată","k":160.0,"p":0,"f":0,"b":93.5,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Potato starch","r":"Amidon de cartofi","k":357.0,"p":0.1,"f":0.1,"b":83.1,"i":5.9,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Psyllium husk","r":"Tărâțe psyllium","k":200.0,"p":3.8,"f":0.6,"b":88.6,"i":84.1,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Red wine","r":"Vin roșu","k":85.0,"p":0.1,"f":0,"b":2.6,"i":0,"s":0.6},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Rice flour","r":"Făină de orez","k":366.0,"p":6.0,"f":1.4,"b":80.1,"i":2.4,"s":0.1},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Soy flour (full-fat)","r":"Făină din soia integrală","k":441.0,"p":34.5,"f":21.7,"b":35.2,"i":17.7,"s":11.2},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Soy sauce","r":"Sos de soia","k":53.0,"p":8.1,"f":0.1,"b":4.9,"i":0.8,"s":0.9},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Tomato paste","r":"Pastă de tomate","k":82.0,"p":4.3,"f":0.5,"b":18.9,"i":4.1,"s":12.2},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Vegetable broth","r":"Supă de legume","k":14.0,"p":0.4,"f":0.4,"b":2.4,"i":0,"s":1.0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Vital wheat gluten","r":"Gluten vital din grâu","k":370.0,"p":75.2,"f":1.9,"b":13.8,"i":0.6,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"White wine","r":"Vin alb","k":82.0,"p":0.1,"f":0,"b":2.6,"i":0,"s":0.9},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Xanthan gum","r":"Gumă xanthan","k":333.0,"p":0,"f":0,"b":83.0,"i":83.0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Xylitol (sweetener)","r":"Xilitol (îndulcitor)","k":240.0,"p":0,"f":0,"b":100.0,"i":0,"s":0},{"c":"Baking & Pantry","cr":"Coacere & Cămară","n":"Yeast (dry)","r":"Drojdie (uscată)","k":325.0,"p":40.4,"f":7.6,"b":41.2,"i":26.9,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Black tea (dry leaves)","r":"Ceai negru (frunze uscate)","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Chamomile tea (dry)","r":"Ceai de mușețel uscat","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Cocoa powder (unsweetened)","r":"Cacao pudră (neîndulcită)","k":228.0,"p":19.6,"f":13.7,"b":57.9,"i":33.2,"s":1.8},{"c":"Beverages","cr":"Băuturi","n":"Coffee (ground, dry)","r":"Cafea (măcinată, uscată)","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Collagen peptides (powder)","r":"Peptide de colagen pudră","k":380.0,"p":90.0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Green tea (dry leaves)","r":"Ceai verde (frunze uscate)","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Matcha powder","r":"Pudră matcha","k":324.0,"p":30.0,"f":5.0,"b":38.0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Protein powder (whey)","r":"Proteină pudră (zer)","k":352.0,"p":80.0,"f":3.5,"b":5.0,"i":0,"s":5.0},{"c":"Beverages","cr":"Băuturi","n":"Rooibos tea (dry)","r":"Ceai rooibos uscat","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Beverages","cr":"Băuturi","n":"Yerba mate (dry)","r":"Yerba mate uscată","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Aioli (garlic mayo)","r":"Aioli (maioneză cu usturoi)","k":680.0,"p":1.5,"f":75.0,"b":2.0,"i":0,"s":0.8},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Almond butter","r":"Unt de migdale","k":614.0,"p":21.0,"f":55.5,"b":18.8,"i":10.3,"s":4.4},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Balsamic vinegar","r":"Oțet balsamic","k":88.0,"p":0.5,"f":0,"b":17.0,"i":0,"s":14.9},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Barbecue sauce","r":"Sos BBQ","k":172.0,"p":1.2,"f":0.2,"b":42.0,"i":0.3,"s":30.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Capers (in brine)","r":"Capere în saramură","k":23.0,"p":2.4,"f":0.9,"b":4.9,"i":3.2,"s":0.4},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Curry paste (green)","r":"Pastă de curry verde","k":150.0,"p":4.0,"f":12.0,"b":8.0,"i":2.5,"s":2.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Curry paste (red)","r":"Pastă de curry roșu","k":180.0,"p":5.0,"f":14.0,"b":10.0,"i":3.0,"s":2.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Curry paste (yellow)","r":"Pastă de curry galben","k":165.0,"p":4.5,"f":13.0,"b":9.0,"i":2.5,"s":2.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Dijon mustard","r":"Muștar dijon","k":151.0,"p":10.0,"f":10.0,"b":5.9,"i":4.0,"s":1.4},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Fish paste / Shrimp paste","r":"Pastă de pește / Creveți","k":195.0,"p":27.0,"f":5.0,"b":12.0,"i":0,"s":6.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Fish sauce","r":"Sos de pește","k":35.0,"p":5.1,"f":0,"b":3.6,"i":0,"s":3.6},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Gochujang","r":"Gochujang (pastă chili coreeană)","k":235.0,"p":5.5,"f":2.5,"b":48.7,"i":2.2,"s":15.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Guacamole","r":"Guacamole","k":157.0,"p":2.0,"f":14.6,"b":8.6,"i":6.7,"s":0.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Harissa","r":"Harissa (pastă de chili)","k":95.0,"p":2.5,"f":7.0,"b":8.5,"i":4.5,"s":3.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Hoisin sauce","r":"Sos hoisin","k":220.0,"p":4.0,"f":3.0,"b":43.2,"i":2.4,"s":35.7},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Hollandaise sauce","r":"Sos olandez","k":405.0,"p":2.4,"f":43.5,"b":1.3,"i":0,"s":0.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Hot sauce (tabasco)","r":"Sos iute (tabasco)","k":12.0,"p":0.5,"f":0.4,"b":1.0,"i":0,"s":0.6},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Hummus","r":"Hummus","k":166.0,"p":7.9,"f":9.6,"b":14.3,"i":6.0,"s":0.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Italian dressing","r":"Dressing italian","k":319.0,"p":0.3,"f":33.0,"b":7.2,"i":0.2,"s":3.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Ketchup","r":"Ketchup","k":112.0,"p":1.3,"f":0.1,"b":28.3,"i":0.3,"s":22.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Mayonnaise","r":"Maioneză","k":680.0,"p":1.0,"f":75.0,"b":0.6,"i":0,"s":0.4},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Miso paste","r":"Pastă miso","k":199.0,"p":11.7,"f":6.0,"b":26.5,"i":5.4,"s":6.2},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Mole sauce (traditional)","r":"Sos mole tradițional","k":166.0,"p":4.0,"f":12.0,"b":14.0,"i":4.5,"s":3.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Mustard (yellow)","r":"Muștar (galben)","k":66.0,"p":4.4,"f":3.6,"b":5.8,"i":2.0,"s":0.9},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Oyster sauce","r":"Sos de stridii","k":51.0,"p":0.9,"f":0.3,"b":11.2,"i":0.2,"s":5.7},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Peanut butter","r":"Unt de arahide","k":588.0,"p":25.1,"f":50.4,"b":20.1,"i":6.0,"s":9.2},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Pesto","r":"Pesto","k":411.0,"p":6.3,"f":40.0,"b":6.1,"i":1.5,"s":2.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Pomegranate molasses","r":"Melasă de rodie","k":328.0,"p":0.3,"f":0.1,"b":85.0,"i":0.3,"s":76.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Ranch dressing","r":"Dressing ranch","k":318.0,"p":1.9,"f":33.0,"b":5.0,"i":0.2,"s":2.8},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Romesco sauce","r":"Sos romesco","k":260.0,"p":5.0,"f":22.0,"b":14.0,"i":3.5,"s":4.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Salsa","r":"Salsa","k":36.0,"p":1.7,"f":0.2,"b":7.3,"i":1.3,"s":4.2},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Sambal oelek","r":"Sambal oelek","k":44.0,"p":1.5,"f":0.4,"b":9.6,"i":2.7,"s":6.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Satay sauce (peanut)","r":"Sos satay arahide","k":419.0,"p":13.5,"f":31.0,"b":26.5,"i":4.0,"s":13.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Sriracha sauce","r":"Sos sriracha","k":93.0,"p":2.0,"f":0.5,"b":20.0,"i":1.0,"s":14.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Sweet chili sauce","r":"Sos chili dulce","k":244.0,"p":0.5,"f":0.5,"b":61.5,"i":0.5,"s":55.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Tahini","r":"Tahini (pastă susan)","k":595.0,"p":17.0,"f":53.8,"b":21.2,"i":9.3,"s":0.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Teriyaki sauce","r":"Sos teriyaki","k":104.0,"p":6.0,"f":0.1,"b":22.0,"i":0.3,"s":16.0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Tzatziki","r":"Tzatziki","k":72.0,"p":3.1,"f":4.5,"b":5.3,"i":0.2,"s":3.3},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Vinaigrette (basic)","r":"Vinegretă simplă","k":420.0,"p":0,"f":46.0,"b":3.5,"i":0,"s":0.5},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"White wine vinegar","r":"Oțet de vin alb","k":18.0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"Worcestershire sauce","r":"Sos worcestershire","k":78.0,"p":0,"f":0,"b":19.4,"i":0,"s":10.2},{"c":"Condiments & Sauces","cr":"Condimente & Sosuri","n":"XO sauce","r":"Sos XO","k":285.0,"p":12.0,"f":22.0,"b":10.0,"i":1.5,"s":3.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Blue cheese","r":"Brânză albastră","k":353.0,"p":21.4,"f":28.7,"b":2.3,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Blue cheese (full-fat, 28%)","r":"Brânză albastră (grasă, 28%)","k":353.0,"p":21.4,"f":28.7,"b":2.3,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Brie (full-fat, 27%)","r":"Brie (gras, 27%)","k":334.0,"p":20.7,"f":27.7,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Brie (light, 15%)","r":"Brie (light, 15%)","k":231.0,"p":22.0,"f":15.0,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Brie cheese","r":"Brânză brie","k":334.0,"p":20.7,"f":27.7,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Brown butter (beurre noisette)","r":"Unt brun (beurre noisette)","k":717.0,"p":0.9,"f":81.1,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Brânză burduf (full-fat)","r":"Brânză burduf (grasă)","k":370.0,"p":22.0,"f":32.0,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Buffalo milk (8% fat)","r":"Lapte de bivoliță (8% grăsime)","k":117.0,"p":4.5,"f":8.0,"b":5.2,"i":0,"s":5.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Buffalo mozzarella (22% fat)","r":"Mozzarella di Bufala (22% grăsime)","k":262.0,"p":17.0,"f":22.0,"b":0.7,"i":0,"s":0.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Bulgarian yogurt (3.6% fat)","r":"Iaurt bulgăresc (3.6% grăsime)","k":74.0,"p":3.5,"f":3.6,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Butter","r":"Unt","k":717.0,"p":0.9,"f":81.1,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Butter (light, 40% fat)","r":"Unt ușor (40% grăsime)","k":366.0,"p":0.9,"f":40.0,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Butter (salted, 80% fat)","r":"Unt sărat (80% grăsime)","k":717.0,"p":0.9,"f":81.1,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Butter (unsalted, 82% fat)","r":"Unt nesărat (82% grăsime)","k":737.0,"p":0.9,"f":82.0,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Buttermilk (0.9% fat)","r":"Zară (0.9% grăsime)","k":40.0,"p":3.3,"f":0.9,"b":4.8,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Buttermilk (1.5% fat)","r":"Zară (1.5% grăsime)","k":47.0,"p":3.4,"f":1.5,"b":4.8,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Camembert","r":"Camembert","k":300.0,"p":19.8,"f":24.3,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Camembert (full-fat, 24%)","r":"Camembert (gras, 24%)","k":300.0,"p":19.8,"f":24.3,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Camembert (light, 12%)","r":"Camembert (light, 12%)","k":189.0,"p":21.0,"f":12.0,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cașcaval (18% fat)","r":"Cașcaval (18% grăsime)","k":245.0,"p":24.0,"f":18.0,"b":1.5,"i":0,"s":1.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cașcaval (26% fat)","r":"Cașcaval (26% grăsime)","k":334.0,"p":22.0,"f":26.0,"b":1.5,"i":0,"s":1.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cașul (fresh cheese)","r":"Caș proaspăt","k":145.0,"p":13.5,"f":10.0,"b":1.5,"i":0,"s":1.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cheddar (full-fat, 33%)","r":"Cheddar (gras, 33%)","k":403.0,"p":25.0,"f":33.1,"b":1.3,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cheddar (low-fat, 7%)","r":"Cheddar (sărac în grăsimi, 7%)","k":173.0,"p":27.0,"f":7.0,"b":3.0,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cheddar (reduced-fat, 17%)","r":"Cheddar (grăsime redusă, 17%)","k":261.0,"p":31.0,"f":17.0,"b":1.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cheddar cheese","r":"Brânză cheddar","k":403.0,"p":25.0,"f":33.1,"b":1.3,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Clarified butter / Ghee","r":"Unt clarificat / Ghee","k":900.0,"p":0,"f":99.8,"b":0,"i":0,"s":0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Condensed milk (sweetened)","r":"Lapte condensat (îndulcit)","k":321.0,"p":7.9,"f":8.7,"b":54.4,"i":0,"s":54.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Condensed milk (sweetened, full-fat)","r":"Lapte condensat îndulcit (integral)","k":321.0,"p":7.9,"f":8.7,"b":54.4,"i":0,"s":54.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Condensed milk (sweetened, low-fat)","r":"Lapte condensat îndulcit (degresat)","k":292.0,"p":9.0,"f":3.0,"b":60.0,"i":0,"s":60.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cottage cheese","r":"Brânză de vaci","k":98.0,"p":11.1,"f":4.3,"b":3.4,"i":0,"s":2.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cottage cheese (0% fat)","r":"Brânză de vaci (0% grăsime)","k":72.0,"p":12.4,"f":0.3,"b":3.4,"i":0,"s":3.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cottage cheese (2% fat)","r":"Brânză de vaci (2% grăsime)","k":84.0,"p":11.1,"f":2.3,"b":3.4,"i":0,"s":2.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cottage cheese (4% fat)","r":"Brânză de vaci (4% grăsime)","k":98.0,"p":11.1,"f":4.3,"b":3.4,"i":0,"s":2.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cream cheese","r":"Cremă de brânză","k":342.0,"p":6.0,"f":34.0,"b":4.1,"i":0,"s":3.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cream cheese (fat-free)","r":"Cremă de brânză (fără grăsime)","k":100.0,"p":12.0,"f":0.3,"b":10.6,"i":0,"s":6.9},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cream cheese (full-fat, 33%)","r":"Cremă de brânză (grasă, 33%)","k":342.0,"p":6.0,"f":34.0,"b":4.1,"i":0,"s":3.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cream cheese (light, 14%)","r":"Cremă de brânză (ușoară, 14%)","k":170.0,"p":8.5,"f":14.0,"b":5.5,"i":0,"s":5.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Crème fraîche (30% fat)","r":"Crème fraîche (30% grăsime)","k":292.0,"p":2.1,"f":30.0,"b":3.8,"i":0,"s":3.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Crème fraîche (35% fat)","r":"Crème fraîche (35% grăsime)","k":340.0,"p":2.1,"f":35.0,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Cultured buttermilk (low-fat)","r":"Zară fermentată (slabă)","k":40.0,"p":3.3,"f":0.9,"b":4.8,"i":0,"s":4.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Double cream (48% fat)","r":"Frișcă dublă (48% grăsime)","k":460.0,"p":1.7,"f":48.0,"b":2.5,"i":0,"s":2.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Duck egg","r":"Ou de rață","k":185.0,"p":13.0,"f":13.8,"b":1.4,"i":0,"s":1.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Edam (24% fat)","r":"Edam (24% grăsime)","k":313.0,"p":24.9,"f":24.0,"b":0.4,"i":0,"s":0.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Edam (light, 16%)","r":"Edam (light, 16%)","k":241.0,"p":27.0,"f":16.0,"b":0.4,"i":0,"s":0.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg (fried, with oil)","r":"Ou prăjit (cu ulei)","k":196.0,"p":13.6,"f":15.4,"b":0.8,"i":0,"s":0.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg (hard-boiled)","r":"Ou fiert tare","k":155.0,"p":12.6,"f":10.6,"b":1.1,"i":0,"s":1.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg (poached)","r":"Ou pochet (fiert în apă)","k":147.0,"p":12.5,"f":9.9,"b":0.7,"i":0,"s":0.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg (scrambled, plain)","r":"Ou scrambled (simplu)","k":149.0,"p":9.9,"f":11.4,"b":1.6,"i":0,"s":1.6},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg (whole, raw)","r":"Ou (întreg, crud)","k":155.0,"p":12.6,"f":10.6,"b":1.1,"i":0,"s":1.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg white (raw)","r":"Albuș de ou (crud)","k":52.0,"p":10.9,"f":0.2,"b":0.7,"i":0,"s":0.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Egg yolk (raw)","r":"Gălbenuș de ou (crud)","k":322.0,"p":15.9,"f":26.5,"b":3.6,"i":0,"s":3.6},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Emmental (full-fat, 29%)","r":"Emmental (gras, 29%)","k":380.0,"p":28.8,"f":29.0,"b":1.4,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Evaporated milk","r":"Lapte evaporat","k":134.0,"p":6.8,"f":7.6,"b":10.0,"i":0,"s":10.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Evaporated milk (full-fat)","r":"Lapte evaporat (integral)","k":134.0,"p":6.8,"f":7.6,"b":10.0,"i":0,"s":10.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Evaporated milk (skimmed)","r":"Lapte evaporat (degresat)","k":78.0,"p":7.6,"f":0.2,"b":11.3,"i":0,"s":11.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Feta (cow milk)","r":"Feta (din lapte de vacă)","k":245.0,"p":13.0,"f":20.0,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Feta (reduced fat, 12%)","r":"Feta (grăsime redusă, 12%)","k":175.0,"p":15.0,"f":12.0,"b":4.1,"i":0,"s":4.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Feta (sheep milk, 22% fat)","r":"Feta (lapte oaie, 22% grăsime)","k":264.0,"p":14.2,"f":21.3,"b":4.1,"i":0,"s":4.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Feta cheese","r":"Brânză feta","k":264.0,"p":14.2,"f":21.3,"b":4.1,"i":0,"s":4.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goat butter","r":"Unt din lapte de capră","k":740.0,"p":0.8,"f":82.0,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goat kefir (3% fat)","r":"Chefir din lapte de capră (3% grăsime)","k":62.0,"p":3.6,"f":3.0,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goat milk","r":"Lapte de capră","k":69.0,"p":3.6,"f":4.1,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goat milk (3.5% fat)","r":"Lapte de capră (3.5% grăsime)","k":69.0,"p":3.6,"f":4.1,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goat milk yogurt (3% fat)","r":"Iaurt din lapte de capră (3% grăsime)","k":67.0,"p":3.6,"f":3.0,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Goose egg","r":"Ou de gâscă","k":185.0,"p":13.9,"f":13.3,"b":1.4,"i":0,"s":1.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gorgonzola (28% fat)","r":"Gorgonzola (28% grăsime)","k":361.0,"p":20.9,"f":28.0,"b":3.3,"i":0,"s":0.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gouda (aged, 30% fat)","r":"Gouda (maturată, 30% grăsime)","k":384.0,"p":25.5,"f":30.0,"b":2.2,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gouda (full-fat, 27%)","r":"Gouda (grasă, 27%)","k":356.0,"p":24.9,"f":27.4,"b":2.2,"i":0,"s":2.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gouda (young, 28% fat)","r":"Gouda (tânără, 28% grăsime)","k":360.0,"p":25.0,"f":28.0,"b":2.2,"i":0,"s":2.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gouda cheese","r":"Brânză gouda","k":356.0,"p":24.9,"f":27.4,"b":2.2,"i":0,"s":2.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Greek yogurt (0% fat)","r":"Iaurt grecesc (0% grăsime)","k":59.0,"p":10.3,"f":0.4,"b":3.6,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Greek yogurt (10% fat)","r":"Iaurt grecesc (10% grăsime)","k":146.0,"p":8.7,"f":10.0,"b":3.6,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Greek yogurt (2% fat)","r":"Iaurt grecesc (2% grăsime)","k":73.0,"p":10.0,"f":2.0,"b":3.6,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Greek yogurt (5% fat)","r":"Iaurt grecesc (5% grăsime)","k":97.0,"p":9.0,"f":5.0,"b":3.6,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Greek yogurt (full-fat)","r":"Iaurt grecesc (gras)","k":97.0,"p":9.0,"f":5.0,"b":3.6,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Gruyère (32% fat)","r":"Gruyère (32% grăsime)","k":413.0,"p":29.8,"f":32.3,"b":0.4,"i":0,"s":0.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Heavy cream","r":"Smântână pentru frișcă","k":340.0,"p":2.1,"f":35.1,"b":2.8,"i":0,"s":2.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Heavy cream (35% fat)","r":"Frișcă grea (35% grăsime)","k":340.0,"p":2.1,"f":35.1,"b":2.8,"i":0,"s":2.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Heavy cream (40% fat)","r":"Frișcă grea (40% grăsime)","k":387.0,"p":2.1,"f":40.0,"b":2.8,"i":0,"s":2.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Kefir","r":"Chefir","k":52.0,"p":3.5,"f":1.0,"b":7.0,"i":0,"s":6.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Kefir (0% fat)","r":"Chefir (0% grăsime)","k":34.0,"p":3.4,"f":0.1,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Kefir (1% fat)","r":"Chefir (1% grăsime)","k":41.0,"p":3.3,"f":1.0,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Kefir (2.5% fat)","r":"Chefir (2.5% grăsime)","k":52.0,"p":3.5,"f":2.5,"b":4.0,"i":0,"s":3.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Kefir (3.2% fat)","r":"Chefir (3.2% grăsime)","k":59.0,"p":3.5,"f":3.2,"b":4.0,"i":0,"s":3.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Labneh (10% fat)","r":"Labneh (10% grăsime)","k":160.0,"p":8.0,"f":10.0,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Labneh (strained yogurt, 5% fat)","r":"Labneh (iaurt strecurat, 5% grăsime)","k":105.0,"p":7.0,"f":5.0,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Lactose-free whole milk","r":"Lapte integral fără lactoză","k":61.0,"p":3.2,"f":3.5,"b":4.8,"i":0,"s":4.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Light cream (10% fat)","r":"Frișcă ușoară (10% grăsime)","k":103.0,"p":2.9,"f":10.0,"b":4.4,"i":0,"s":4.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Light cream (15% fat)","r":"Frișcă ușoară (15% grăsime)","k":150.0,"p":2.8,"f":15.0,"b":4.1,"i":0,"s":4.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Light cream (20% fat)","r":"Frișcă (20% grăsime)","k":195.0,"p":2.5,"f":20.0,"b":3.9,"i":0,"s":3.9},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mascarpone","r":"Mascarpone","k":429.0,"p":4.5,"f":44.7,"b":3.4,"i":0,"s":3.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mascarpone (full-fat, 44%)","r":"Mascarpone (gras, 44%)","k":429.0,"p":4.5,"f":44.7,"b":3.4,"i":0,"s":3.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mascarpone (light, 22%)","r":"Mascarpone (light, 22%)","k":244.0,"p":5.5,"f":22.0,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mozzarella","r":"Mozzarella","k":280.0,"p":28.0,"f":17.0,"b":2.2,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mozzarella (full-fat, 20%)","r":"Mozzarella (grasă, 20%)","k":280.0,"p":28.0,"f":17.0,"b":2.2,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mozzarella (light, 12%)","r":"Mozzarella (light, 12%)","k":187.0,"p":22.0,"f":12.0,"b":2.2,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Mozzarella (low-moisture, 25%)","r":"Mozzarella (umiditate redusă, 25%)","k":318.0,"p":21.6,"f":25.0,"b":2.2,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Ostrich egg","r":"Ou de struț","k":155.0,"p":13.0,"f":11.0,"b":0.5,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Parmesan","r":"Parmezan","k":431.0,"p":38.5,"f":29.7,"b":3.2,"i":0,"s":0.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Parmesan (Grana Padano, 28%)","r":"Grana Padano (28% grăsime)","k":384.0,"p":33.0,"f":28.0,"b":0,"i":0,"s":0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Parmesan (Pecorino Romano, 27%)","r":"Pecorino Romano (27% grăsime)","k":387.0,"p":32.0,"f":27.0,"b":3.6,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Parmesan (full-fat, 29%)","r":"Parmezan (gras, 29%)","k":431.0,"p":38.5,"f":29.7,"b":3.2,"i":0,"s":0.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt","r":"Iaurt simplu","k":61.0,"p":3.5,"f":3.3,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt (0% fat)","r":"Iaurt simplu (0% grăsime)","k":56.0,"p":5.7,"f":0.2,"b":7.7,"i":0,"s":7.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt (1.5% fat)","r":"Iaurt simplu (1.5% grăsime)","k":60.0,"p":3.5,"f":1.5,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt (10% fat)","r":"Iaurt simplu (10% grăsime)","k":136.0,"p":2.9,"f":10.0,"b":4.5,"i":0,"s":4.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt (2% fat)","r":"Iaurt simplu (2% grăsime)","k":62.0,"p":3.5,"f":2.0,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Plain yogurt (3.5% fat)","r":"Iaurt simplu (3.5% grăsime)","k":72.0,"p":3.5,"f":3.5,"b":4.7,"i":0,"s":4.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Pot cheese (dry curd)","r":"Brânză de vaci uscată","k":105.0,"p":17.0,"f":4.3,"b":2.0,"i":0,"s":2.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quail egg","r":"Ou de prepeliță","k":158.0,"p":13.1,"f":11.1,"b":0.4,"i":0,"s":0.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quark (0% fat)","r":"Quark (0% grăsime)","k":55.0,"p":12.0,"f":0.2,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quark (10% fat)","r":"Quark (10% grăsime)","k":133.0,"p":12.0,"f":10.0,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quark (20% fat)","r":"Quark (20% grăsime)","k":215.0,"p":10.0,"f":20.0,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quark (5% fat)","r":"Quark (5% grăsime)","k":90.0,"p":12.0,"f":5.0,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Quark cheese","r":"Brânză quark","k":77.0,"p":12.6,"f":0.2,"b":4.0,"i":0,"s":4.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Raclette (28% fat)","r":"Raclette (28% grăsime)","k":357.0,"p":24.3,"f":28.0,"b":0.3,"i":0,"s":0.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Ricotta","r":"Ricotta","k":174.0,"p":11.3,"f":13.0,"b":3.0,"i":0,"s":0.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Ricotta (fat-free)","r":"Ricotta (fără grăsime)","k":74.0,"p":12.6,"f":0,"b":6.5,"i":0,"s":0.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Ricotta (part-skim, 8% fat)","r":"Ricotta (parțial degresată, 8%)","k":138.0,"p":11.4,"f":8.0,"b":5.1,"i":0,"s":0.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Ricotta (whole milk)","r":"Ricotta (lapte integral)","k":174.0,"p":11.3,"f":13.0,"b":3.0,"i":0,"s":0.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Romanian sour cream (smântână, 25%)","r":"Smântână românească (25% grăsime)","k":240.0,"p":2.5,"f":25.0,"b":3.5,"i":0,"s":3.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Roquefort (30% fat)","r":"Roquefort (30% grăsime)","k":369.0,"p":21.5,"f":30.6,"b":2.0,"i":0,"s":2.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sana (2% fat)","r":"Sana (2% grăsime)","k":50.0,"p":3.2,"f":2.0,"b":4.8,"i":0,"s":4.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sana (3.5% fat)","r":"Sana (3.5% grăsime)","k":65.0,"p":3.2,"f":3.5,"b":4.8,"i":0,"s":4.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sana (4% fat)","r":"Sana (4% grăsime)","k":70.0,"p":3.2,"f":4.0,"b":4.8,"i":0,"s":4.8},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Semi-skimmed milk (1.5% fat)","r":"Lapte semidegresat (1.5% grăsime)","k":46.0,"p":3.5,"f":1.5,"b":4.9,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Semi-skimmed milk (2% fat)","r":"Lapte semidegresat (2% grăsime)","k":50.0,"p":3.4,"f":2.0,"b":4.9,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sheep kefir (6% fat)","r":"Chefir din lapte de oaie (6% grăsime)","k":98.0,"p":5.2,"f":6.0,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sheep milk (7% fat)","r":"Lapte de oaie (7% grăsime)","k":108.0,"p":5.9,"f":7.0,"b":5.4,"i":0,"s":5.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sheep milk yogurt (10% fat)","r":"Iaurt din lapte de oaie (10% grăsime)","k":145.0,"p":5.0,"f":10.0,"b":5.4,"i":0,"s":5.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sheep milk yogurt (6% fat)","r":"Iaurt din lapte de oaie (6% grăsime)","k":105.0,"p":5.5,"f":6.0,"b":5.4,"i":0,"s":5.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Skim milk","r":"Lapte degresat","k":34.0,"p":3.4,"f":0.1,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Skim milk (0% fat)","r":"Lapte degresat (0% grăsime)","k":34.0,"p":3.4,"f":0.1,"b":5.0,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Skyr (0% fat)","r":"Skyr (0% grăsime)","k":63.0,"p":11.0,"f":0.2,"b":4.0,"i":0,"s":4.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Skyr (2% fat)","r":"Skyr (2% grăsime)","k":79.0,"p":10.5,"f":2.0,"b":4.0,"i":0,"s":4.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream","r":"Smântână fermentată","k":193.0,"p":2.1,"f":19.4,"b":3.6,"i":0,"s":3.6},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream (10% fat)","r":"Smântână fermentată (10% grăsime)","k":103.0,"p":3.1,"f":10.0,"b":3.4,"i":0,"s":3.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream (15% fat)","r":"Smântână fermentată (15% grăsime)","k":145.0,"p":2.8,"f":15.0,"b":3.3,"i":0,"s":3.3},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream (20% fat)","r":"Smântână fermentată (20% grăsime)","k":193.0,"p":2.1,"f":20.0,"b":3.6,"i":0,"s":3.6},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream (25% fat)","r":"Smântână fermentată (25% grăsime)","k":237.0,"p":2.0,"f":25.0,"b":3.4,"i":0,"s":3.4},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Sour cream (30% fat)","r":"Smântână fermentată (30% grăsime)","k":283.0,"p":2.0,"f":30.0,"b":3.2,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Stilton (35% fat)","r":"Stilton (35% grăsime)","k":410.0,"p":23.7,"f":35.0,"b":0.1,"i":0,"s":0.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Swiss cheese (Emmental)","r":"Brânză elvețiană (Emmental)","k":380.0,"p":28.8,"f":29.0,"b":1.4,"i":0,"s":0.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Telemea (cow, 14% fat)","r":"Telemea de vacă (14% grăsime)","k":163.0,"p":14.0,"f":14.0,"b":1.5,"i":0,"s":1.5},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Telemea (sheep, 20% fat)","r":"Telemea de oaie (20% grăsime)","k":230.0,"p":16.0,"f":20.0,"b":1.0,"i":0,"s":1.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Turkey egg","r":"Ou de curcan","k":171.0,"p":13.7,"f":11.9,"b":1.7,"i":0,"s":1.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"UHT whole milk","r":"Lapte UHT integral","k":63.0,"p":3.2,"f":3.5,"b":4.9,"i":0,"s":5.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Urdă (full-fat)","r":"Urdă (grasă)","k":160.0,"p":14.0,"f":10.0,"b":2.0,"i":0,"s":2.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Urdă (low-fat)","r":"Urdă (slabă)","k":105.0,"p":15.0,"f":5.0,"b":2.0,"i":0,"s":2.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whey protein powder","r":"Proteină din zer (pudră)","k":352.0,"p":82.0,"f":3.0,"b":6.0,"i":0,"s":6.0},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whipped cream (sweetened)","r":"Frișcă bătută (îndulcită)","k":300.0,"p":1.9,"f":27.0,"b":9.7,"i":0,"s":9.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whipped cream (unsweetened)","r":"Frișcă bătută (neîndulcită)","k":257.0,"p":1.9,"f":27.0,"b":1.7,"i":0,"s":1.7},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whipping cream (30% fat)","r":"Frișcă pentru bătut (30% grăsime)","k":289.0,"p":2.2,"f":30.0,"b":3.2,"i":0,"s":3.2},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whole milk","r":"Lapte integral","k":61.0,"p":3.2,"f":3.3,"b":4.8,"i":0,"s":5.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whole milk (3.5% fat)","r":"Lapte integral (3.5% grăsime)","k":61.0,"p":3.2,"f":3.5,"b":4.8,"i":0,"s":5.1},{"c":"Dairy & Eggs","cr":"Lactate & Ouă","n":"Whole milk (3.8% fat)","r":"Lapte integral (3.8% grăsime)","k":66.0,"p":3.2,"f":3.8,"b":4.8,"i":0,"s":5.1},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Abalone (raw)","r":"Abalone (crud)","k":105.0,"p":17.1,"f":0.8,"b":6.0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Anchovy (raw)","r":"Hamsie (crudă)","k":131.0,"p":20.4,"f":4.8,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Atlantic salmon (farmed, raw)","r":"Somon atlantic (crescătorie, crud)","k":206.0,"p":20.4,"f":13.4,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Barramundi (raw)","r":"Barramundi (crud)","k":104.0,"p":17.8,"f":3.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Bluefin tuna (raw)","r":"Ton bluefin (crud)","k":144.0,"p":23.3,"f":4.9,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Bluefish (raw)","r":"Pește albastru (crud)","k":124.0,"p":20.0,"f":4.2,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Canned sardines in oil","r":"Sardine la conservă în ulei","k":208.0,"p":24.6,"f":11.5,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Carp (raw)","r":"Crap (crud)","k":127.0,"p":17.8,"f":5.6,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Catfish (raw)","r":"Somn (crud)","k":95.0,"p":16.4,"f":2.8,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Clams (raw)","r":"Scoici (crude)","k":86.0,"p":14.7,"f":1.2,"b":3.6,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Cod (raw)","r":"Cod (crud)","k":82.0,"p":17.8,"f":0.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Conch (raw)","r":"Melc de mare (crud)","k":130.0,"p":26.3,"f":0.7,"b":2.3,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Crab (raw)","r":"Crab (crud)","k":87.0,"p":18.1,"f":1.1,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Crawfish / Crayfish (raw)","r":"Rac de apă dulce (crud)","k":77.0,"p":16.0,"f":0.9,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Dried fish (cod, bacalà)","r":"Pește uscat / Bacalà","k":331.0,"p":72.0,"f":2.4,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Eel (raw)","r":"Anghilă (crudă)","k":184.0,"p":18.4,"f":11.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Fish roe (red / salmon)","r":"Icre roșii / Icre de somon","k":252.0,"p":28.6,"f":13.8,"b":2.7,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Fish roe / Caviar (black)","r":"Icre / Caviar negru","k":264.0,"p":24.6,"f":17.9,"b":4.0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Flounder (raw)","r":"Cambulă (crudă)","k":91.0,"p":18.8,"f":1.2,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Geoduck clam (raw)","r":"Geoduck (crud)","k":78.0,"p":14.0,"f":1.0,"b":4.0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Grouper (raw)","r":"Grouper (crud)","k":92.0,"p":19.4,"f":1.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Haddock (raw)","r":"Haddock (crud)","k":87.0,"p":18.9,"f":0.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Hake (raw)","r":"Merluciu (crud)","k":86.0,"p":17.0,"f":1.4,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Halibut (raw)","r":"Halibut (crud)","k":111.0,"p":22.5,"f":2.3,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Herring (raw)","r":"Hering (crud)","k":158.0,"p":17.9,"f":9.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Langoustine / Scampi (raw)","r":"Langustină / Scampi (crudă)","k":90.0,"p":17.6,"f":1.2,"b":0.5,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Lobster (raw)","r":"Homar (crud)","k":89.0,"p":19.0,"f":0.9,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Mackerel (raw)","r":"Macrou (crud)","k":205.0,"p":18.6,"f":13.9,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Mahi-mahi / Dorado (raw)","r":"Mahi-mahi / Dorado (crud)","k":109.0,"p":23.7,"f":0.9,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Monkfish (raw)","r":"Monkfish (crud)","k":76.0,"p":14.5,"f":1.5,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Mullet (raw)","r":"Chefal (crud)","k":117.0,"p":19.4,"f":3.8,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Mussels (raw)","r":"Midii (crude)","k":86.0,"p":11.9,"f":2.2,"b":3.7,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Octopus (raw)","r":"Caracatiță (crudă)","k":82.0,"p":14.9,"f":1.0,"b":2.2,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Oyster (raw)","r":"Stridii (crude)","k":69.0,"p":7.1,"f":2.5,"b":3.9,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Pangasius / Basa (raw)","r":"Pangasius / Basa (crud)","k":90.0,"p":15.0,"f":3.5,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Perch (raw)","r":"Biban (crud)","k":91.0,"p":19.5,"f":1.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Pike (raw)","r":"Știucă (crudă)","k":88.0,"p":19.3,"f":0.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Pompano (raw)","r":"Pompano (crud)","k":164.0,"p":18.5,"f":9.5,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Rainbow trout (raw)","r":"Păstrăv curcubeu (crud)","k":141.0,"p":19.9,"f":6.2,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Razor clam (raw)","r":"Scoică razor (crudă)","k":79.0,"p":14.0,"f":1.2,"b":3.5,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Red snapper (raw)","r":"Snapper roșu (crud)","k":100.0,"p":20.5,"f":1.3,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Salmon (raw)","r":"Somon (crud)","k":208.0,"p":20.4,"f":13.4,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Salmon (smoked)","r":"Somon afumat","k":117.0,"p":18.3,"f":4.3,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sardine (raw)","r":"Sardine (crude)","k":208.0,"p":24.6,"f":11.5,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Scallops (raw)","r":"Scoici festonate (crude)","k":88.0,"p":16.8,"f":0.8,"b":2.4,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sea bass (raw)","r":"Biban de mare (crud)","k":97.0,"p":18.4,"f":2.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sea urchin (raw)","r":"Arici de mare (crud)","k":125.0,"p":13.0,"f":7.0,"b":5.4,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Shrimp (raw)","r":"Creveți (cruzi)","k":99.0,"p":24.0,"f":0.3,"b":0.2,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sole (raw)","r":"Limbă de mare (crudă)","k":91.0,"p":17.0,"f":1.2,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sprat (raw)","r":"Sprot (crud)","k":127.0,"p":17.5,"f":6.1,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Squid (raw)","r":"Calmar (crud)","k":92.0,"p":15.6,"f":1.4,"b":3.1,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Sturgeon (raw)","r":"Sturion (crud)","k":105.0,"p":16.1,"f":4.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Surimi / Imitation crab","r":"Surimi / Crab artificial","k":95.0,"p":12.4,"f":0.9,"b":8.5,"i":0,"s":3.0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Swordfish (raw)","r":"Pește-spadă (crud)","k":121.0,"p":19.8,"f":4.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Tilapia (raw)","r":"Tilapia (crudă)","k":96.0,"p":20.1,"f":1.7,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Trout (raw)","r":"Păstrăv (crud)","k":148.0,"p":20.8,"f":6.6,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Tuna (canned in oil)","r":"Ton (conservă în ulei)","k":200.0,"p":25.5,"f":10.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Tuna (canned in water)","r":"Ton (conservă în apă)","k":116.0,"p":25.5,"f":0.8,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Tuna (raw)","r":"Ton (crud)","k":132.0,"p":28.2,"f":1.2,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Turbot (raw)","r":"Turbot (crud)","k":95.0,"p":16.5,"f":3.0,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Whelk (raw)","r":"Melc de mare whelk (crud)","k":137.0,"p":23.9,"f":0.5,"b":7.9,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Wild Pacific salmon (raw)","r":"Somon sălbatic pacific (crud)","k":142.0,"p":20.0,"f":6.3,"b":0,"i":0,"s":0},{"c":"Fish & Seafood","cr":"Pește & Fructe de mare","n":"Yellowfin tuna (raw)","r":"Ton cu aripioare galbene (crud)","k":109.0,"p":24.4,"f":0.5,"b":0,"i":0,"s":0},{"c":"Fruits","cr":"Fructe","n":"Acai berry (frozen pulp)","r":"Acai (pulpă congelată)","k":70.0,"p":1.5,"f":5.0,"b":4.0,"i":2.0,"s":2.0},{"c":"Fruits","cr":"Fructe","n":"Annona / Cherimoya","r":"Cherimoya / Anona","k":75.0,"p":1.6,"f":0.7,"b":17.7,"i":3.0,"s":12.9},{"c":"Fruits","cr":"Fructe","n":"Apple","r":"Măr","k":52.0,"p":0.3,"f":0.2,"b":13.8,"i":2.4,"s":10.4},{"c":"Fruits","cr":"Fructe","n":"Apricot","r":"Caisă","k":48.0,"p":1.4,"f":0.4,"b":11.1,"i":2.0,"s":9.2},{"c":"Fruits","cr":"Fructe","n":"Avocado","r":"Avocado","k":160.0,"p":2.0,"f":14.7,"b":8.5,"i":6.7,"s":0.7},{"c":"Fruits","cr":"Fructe","n":"Banana","r":"Banană","k":89.0,"p":1.1,"f":0.3,"b":22.8,"i":2.6,"s":12.2},{"c":"Fruits","cr":"Fructe","n":"Barbados cherry / Acerola","r":"Cireașă Barbados / Acerola","k":32.0,"p":0.4,"f":0.3,"b":7.7,"i":1.1,"s":0},{"c":"Fruits","cr":"Fructe","n":"Blackberry","r":"Mure","k":43.0,"p":1.4,"f":0.5,"b":9.6,"i":5.3,"s":4.9},{"c":"Fruits","cr":"Fructe","n":"Blood orange","r":"Portocală sanguină","k":50.0,"p":1.0,"f":0.1,"b":11.8,"i":2.5,"s":9.5},{"c":"Fruits","cr":"Fructe","n":"Blueberry","r":"Afine","k":57.0,"p":0.7,"f":0.3,"b":14.5,"i":2.4,"s":10.0},{"c":"Fruits","cr":"Fructe","n":"Boysenberry","r":"Boysenberry","k":50.0,"p":1.0,"f":0.4,"b":11.2,"i":5.3,"s":4.9},{"c":"Fruits","cr":"Fructe","n":"Breadfruit","r":"Fructă pâine","k":103.0,"p":1.1,"f":0.2,"b":27.1,"i":4.9,"s":11.0},{"c":"Fruits","cr":"Fructe","n":"Cape gooseberry / Physalis","r":"Physalis / Agriș cape","k":53.0,"p":1.9,"f":0.7,"b":11.2,"i":3.0,"s":7.0},{"c":"Fruits","cr":"Fructe","n":"Cherry","r":"Cireașă","k":63.0,"p":1.1,"f":0.2,"b":16.0,"i":2.1,"s":12.8},{"c":"Fruits","cr":"Fructe","n":"Cloudberry","r":"Cloudberry (mur artic)","k":51.0,"p":0.8,"f":0.8,"b":12.0,"i":4.2,"s":5.3},{"c":"Fruits","cr":"Fructe","n":"Coconut water (fresh)","r":"Apă de cocos (proaspătă)","k":19.0,"p":0.7,"f":0.2,"b":3.7,"i":1.1,"s":2.6},{"c":"Fruits","cr":"Fructe","n":"Cranberry","r":"Merișoare","k":46.0,"p":0.4,"f":0.1,"b":12.2,"i":4.6,"s":4.0},{"c":"Fruits","cr":"Fructe","n":"Cranberry (fresh)","r":"Merișoare proaspete","k":46.0,"p":0.4,"f":0.1,"b":12.2,"i":4.6,"s":4.0},{"c":"Fruits","cr":"Fructe","n":"Currant (black)","r":"Coacăze negre","k":63.0,"p":1.4,"f":0.4,"b":15.4,"i":0,"s":0},{"c":"Fruits","cr":"Fructe","n":"Currant (red)","r":"Coacăze roșii","k":56.0,"p":1.4,"f":0.2,"b":13.8,"i":4.3,"s":7.4},{"c":"Fruits","cr":"Fructe","n":"Date (dried)","r":"Curmale (uscate)","k":282.0,"p":2.5,"f":0.4,"b":75.0,"i":8.0,"s":63.4},{"c":"Fruits","cr":"Fructe","n":"Dragon fruit","r":"Fructul dragonului","k":60.0,"p":1.2,"f":0.4,"b":13.0,"i":3.0,"s":8.0},{"c":"Fruits","cr":"Fructe","n":"Dried apricot","r":"Caise uscate","k":241.0,"p":3.4,"f":0.5,"b":62.6,"i":7.3,"s":53.4},{"c":"Fruits","cr":"Fructe","n":"Dried cranberry","r":"Merișoare uscate","k":325.0,"p":0.1,"f":1.3,"b":82.4,"i":5.3,"s":72.6},{"c":"Fruits","cr":"Fructe","n":"Durian","r":"Durian","k":147.0,"p":1.5,"f":5.3,"b":27.1,"i":3.8,"s":19.7},{"c":"Fruits","cr":"Fructe","n":"Elderberry","r":"Soc (fructe)","k":73.0,"p":0.7,"f":0.5,"b":18.4,"i":7.0,"s":0},{"c":"Fruits","cr":"Fructe","n":"Feijoa / Pineapple guava","r":"Feijoa","k":55.0,"p":1.2,"f":0.8,"b":12.9,"i":6.4,"s":0},{"c":"Fruits","cr":"Fructe","n":"Fig","r":"Smochină","k":74.0,"p":0.8,"f":0.3,"b":19.2,"i":2.9,"s":16.3},{"c":"Fruits","cr":"Fructe","n":"Fig (dried)","r":"Smochine uscate","k":249.0,"p":3.3,"f":0.9,"b":63.9,"i":9.8,"s":47.9},{"c":"Fruits","cr":"Fructe","n":"Gooseberry","r":"Agrișe","k":44.0,"p":0.9,"f":0.6,"b":10.2,"i":4.3,"s":6.2},{"c":"Fruits","cr":"Fructe","n":"Grape","r":"Strugure","k":69.0,"p":0.6,"f":0.2,"b":18.1,"i":0.9,"s":15.5},{"c":"Fruits","cr":"Fructe","n":"Grapefruit","r":"Grapefruit","k":42.0,"p":0.8,"f":0.1,"b":10.7,"i":1.6,"s":6.9},{"c":"Fruits","cr":"Fructe","n":"Graviola / Soursop","r":"Graviola / Guanabana","k":66.0,"p":1.0,"f":0.3,"b":16.8,"i":3.3,"s":13.5},{"c":"Fruits","cr":"Fructe","n":"Guava","r":"Guava","k":68.0,"p":2.6,"f":1.0,"b":14.3,"i":5.4,"s":8.9},{"c":"Fruits","cr":"Fructe","n":"Jackfruit","r":"Jackfruit","k":95.0,"p":1.7,"f":0.6,"b":23.2,"i":1.5,"s":19.1},{"c":"Fruits","cr":"Fructe","n":"Jackfruit (young, in brine)","r":"Jackfruit tânăr (în saramură)","k":35.0,"p":0.9,"f":0.2,"b":8.5,"i":1.5,"s":4.5},{"c":"Fruits","cr":"Fructe","n":"Kiwi","r":"Kiwi","k":61.0,"p":1.1,"f":0.5,"b":14.7,"i":3.0,"s":9.0},{"c":"Fruits","cr":"Fructe","n":"Kumquat","r":"Kumquat","k":71.0,"p":1.9,"f":0.9,"b":15.9,"i":6.5,"s":9.4},{"c":"Fruits","cr":"Fructe","n":"Lemon","r":"Lămâie","k":29.0,"p":1.1,"f":0.3,"b":9.3,"i":2.8,"s":2.5},{"c":"Fruits","cr":"Fructe","n":"Lime","r":"Limetă","k":30.0,"p":0.7,"f":0.2,"b":10.5,"i":2.8,"s":1.7},{"c":"Fruits","cr":"Fructe","n":"Longan","r":"Longan","k":60.0,"p":1.3,"f":0.1,"b":15.1,"i":1.1,"s":0},{"c":"Fruits","cr":"Fructe","n":"Loquat","r":"Nespor","k":47.0,"p":0.4,"f":0.2,"b":12.1,"i":1.7,"s":0},{"c":"Fruits","cr":"Fructe","n":"Lychee","r":"Liciu","k":66.0,"p":0.8,"f":0.4,"b":16.5,"i":1.3,"s":15.2},{"c":"Fruits","cr":"Fructe","n":"Mandarin / Clementine","r":"Mandarină","k":53.0,"p":0.8,"f":0.3,"b":13.3,"i":1.8,"s":10.6},{"c":"Fruits","cr":"Fructe","n":"Mango","r":"Mango","k":60.0,"p":0.8,"f":0.4,"b":15.0,"i":1.6,"s":13.7},{"c":"Fruits","cr":"Fructe","n":"Mango (dried)","r":"Mango uscat","k":319.0,"p":2.5,"f":0.7,"b":78.6,"i":2.4,"s":66.3},{"c":"Fruits","cr":"Fructe","n":"Mangosteen","r":"Mangustină","k":73.0,"p":0.4,"f":0.6,"b":17.9,"i":1.8,"s":0},{"c":"Fruits","cr":"Fructe","n":"Melon (cantaloupe)","r":"Pepene galben","k":34.0,"p":0.8,"f":0.2,"b":8.2,"i":0.9,"s":7.9},{"c":"Fruits","cr":"Fructe","n":"Mulberry","r":"Dud","k":43.0,"p":1.4,"f":0.4,"b":9.8,"i":1.7,"s":8.1},{"c":"Fruits","cr":"Fructe","n":"Nectarine","r":"Nectarină","k":44.0,"p":1.1,"f":0.3,"b":10.6,"i":1.7,"s":7.9},{"c":"Fruits","cr":"Fructe","n":"Olives (black, in brine)","r":"Măsline negre (în saramură)","k":115.0,"p":0.8,"f":10.7,"b":6.3,"i":3.2,"s":0},{"c":"Fruits","cr":"Fructe","n":"Olives (green, in brine)","r":"Măsline verzi (în saramură)","k":145.0,"p":1.0,"f":15.3,"b":3.8,"i":3.3,"s":0},{"c":"Fruits","cr":"Fructe","n":"Orange","r":"Portocală","k":47.0,"p":0.9,"f":0.1,"b":11.8,"i":2.4,"s":9.4},{"c":"Fruits","cr":"Fructe","n":"Papaya","r":"Papaya","k":43.0,"p":0.5,"f":0.3,"b":11.0,"i":1.7,"s":7.8},{"c":"Fruits","cr":"Fructe","n":"Papaya (dried)","r":"Papaya uscată","k":250.0,"p":0.4,"f":0.8,"b":64.3,"i":0,"s":0},{"c":"Fruits","cr":"Fructe","n":"Passion fruit","r":"Fructul pasiunii","k":97.0,"p":2.2,"f":0.7,"b":23.4,"i":10.4,"s":11.2},{"c":"Fruits","cr":"Fructe","n":"Peach","r":"Piersică","k":39.0,"p":0.9,"f":0.3,"b":9.5,"i":1.5,"s":8.4},{"c":"Fruits","cr":"Fructe","n":"Pear","r":"Pară","k":57.0,"p":0.4,"f":0.1,"b":15.2,"i":3.1,"s":9.8},{"c":"Fruits","cr":"Fructe","n":"Persimmon","r":"Cachi / Kaki","k":70.0,"p":0.6,"f":0.2,"b":18.6,"i":3.6,"s":12.5},{"c":"Fruits","cr":"Fructe","n":"Pineapple","r":"Ananas","k":50.0,"p":0.5,"f":0.1,"b":13.1,"i":1.4,"s":9.9},{"c":"Fruits","cr":"Fructe","n":"Pineapple (dried)","r":"Ananas uscat","k":382.0,"p":0.7,"f":0.8,"b":94.8,"i":3.6,"s":82.4},{"c":"Fruits","cr":"Fructe","n":"Plantain (ripe, raw)","r":"Plantain copt (crud)","k":122.0,"p":1.3,"f":0.4,"b":31.9,"i":2.3,"s":14.8},{"c":"Fruits","cr":"Fructe","n":"Plum","r":"Prună","k":46.0,"p":0.7,"f":0.3,"b":11.4,"i":1.4,"s":9.9},{"c":"Fruits","cr":"Fructe","n":"Pomegranate","r":"Rodie","k":83.0,"p":1.7,"f":1.2,"b":18.7,"i":4.0,"s":13.7},{"c":"Fruits","cr":"Fructe","n":"Pomelo","r":"Pomelo","k":38.0,"p":0.8,"f":0,"b":9.6,"i":1.0,"s":0},{"c":"Fruits","cr":"Fructe","n":"Prune (dried plum)","r":"Prune uscate","k":240.0,"p":2.2,"f":0.4,"b":63.9,"i":7.1,"s":38.1},{"c":"Fruits","cr":"Fructe","n":"Quince","r":"Gutui","k":57.0,"p":0.4,"f":0.1,"b":15.3,"i":1.9,"s":6.3},{"c":"Fruits","cr":"Fructe","n":"Raisin","r":"Stafide","k":299.0,"p":3.1,"f":0.5,"b":79.2,"i":3.7,"s":59.2},{"c":"Fruits","cr":"Fructe","n":"Rambutan","r":"Rambutan","k":82.0,"p":0.7,"f":0.2,"b":20.8,"i":0.9,"s":0},{"c":"Fruits","cr":"Fructe","n":"Raspberry","r":"Zmeură","k":52.0,"p":1.2,"f":0.7,"b":11.9,"i":6.5,"s":4.4},{"c":"Fruits","cr":"Fructe","n":"Rose hip","r":"Măceașă","k":162.0,"p":1.6,"f":0.3,"b":38.2,"i":24.1,"s":0},{"c":"Fruits","cr":"Fructe","n":"Sea buckthorn berry","r":"Cătină (fructe)","k":82.0,"p":1.2,"f":5.0,"b":10.0,"i":0,"s":3.0},{"c":"Fruits","cr":"Fructe","n":"Soursop / Graviola","r":"Graviola","k":66.0,"p":1.0,"f":0.3,"b":16.8,"i":3.3,"s":13.5},{"c":"Fruits","cr":"Fructe","n":"Starfruit","r":"Carambola","k":31.0,"p":1.0,"f":0.3,"b":6.7,"i":2.8,"s":3.1},{"c":"Fruits","cr":"Fructe","n":"Starfruit / Carambola","r":"Carambola","k":31.0,"p":1.0,"f":0.3,"b":6.7,"i":2.8,"s":3.1},{"c":"Fruits","cr":"Fructe","n":"Strawberry","r":"Căpșună","k":32.0,"p":0.7,"f":0.3,"b":7.7,"i":2.0,"s":4.9},{"c":"Fruits","cr":"Fructe","n":"Tamarind","r":"Tamarind","k":239.0,"p":2.8,"f":0.6,"b":62.5,"i":5.1,"s":38.0},{"c":"Fruits","cr":"Fructe","n":"Ugli fruit","r":"Fruct ugli","k":45.0,"p":0.9,"f":0.1,"b":11.8,"i":2.1,"s":9.4},{"c":"Fruits","cr":"Fructe","n":"Watermelon","r":"Pepene verde","k":30.0,"p":0.6,"f":0.2,"b":7.6,"i":0.4,"s":6.2},{"c":"Fruits","cr":"Fructe","n":"Yuzu","r":"Yuzu","k":53.0,"p":0.8,"f":0.3,"b":13.3,"i":1.8,"s":9.4},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Amaranth (raw)","r":"Amarant (crud)","k":371.0,"p":13.6,"f":7.0,"b":65.3,"i":6.7,"s":1.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Barley (raw)","r":"Orz (crud)","k":352.0,"p":12.5,"f":2.3,"b":73.5,"i":17.3,"s":0.8},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Brown rice (raw)","r":"Orez brun (crud)","k":370.0,"p":7.9,"f":2.9,"b":77.2,"i":3.5,"s":0.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Buckwheat","r":"Hrișcă","k":343.0,"p":13.3,"f":3.4,"b":71.5,"i":10.0,"s":0.9},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Bulgur (dry)","r":"Bulgur (uscat)","k":342.0,"p":12.3,"f":1.3,"b":75.9,"i":18.3,"s":0.5},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Corn tortilla chips","r":"Chips tortilla","k":489.0,"p":6.3,"f":23.4,"b":63.5,"i":4.5,"s":0.4},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Cornflakes (plain)","r":"Fulgi de porumb","k":357.0,"p":7.5,"f":0.4,"b":84.2,"i":2.5,"s":7.5},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Cornmeal / Polenta","r":"Mălai / Polentă","k":362.0,"p":8.1,"f":3.6,"b":76.9,"i":7.3,"s":0.6},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Couscous (dry)","r":"Cuscus (uscat)","k":376.0,"p":12.8,"f":0.6,"b":77.4,"i":5.0,"s":0.5},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Einkorn wheat (raw)","r":"Grâu einkorn (crud)","k":338.0,"p":15.0,"f":2.5,"b":69.0,"i":8.0,"s":0.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Farro (raw)","r":"Farro (crud)","k":340.0,"p":15.0,"f":2.5,"b":69.0,"i":7.0,"s":0.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Freekeh (raw)","r":"Freekeh (crud)","k":346.0,"p":12.8,"f":1.5,"b":72.5,"i":12.9,"s":0.5},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Granola (plain)","r":"Granola simplă","k":489.0,"p":11.3,"f":20.8,"b":65.7,"i":5.3,"s":20.0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Kamut / Khorasan wheat","r":"Grâu kamut","k":337.0,"p":14.7,"f":2.2,"b":70.2,"i":11.0,"s":0.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Millet (raw)","r":"Mei (crud)","k":378.0,"p":11.0,"f":4.2,"b":72.9,"i":8.5,"s":0.6},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Muesli (no sugar)","r":"Muesli fără zahăr","k":363.0,"p":11.0,"f":6.0,"b":67.0,"i":7.0,"s":19.0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Oat bran","r":"Tărâțe de ovăz","k":246.0,"p":17.3,"f":7.0,"b":66.2,"i":15.4,"s":1.5},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Oats (rolled)","r":"Fulgi de ovăz","k":389.0,"p":16.9,"f":6.9,"b":66.3,"i":10.6,"s":1.1},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Popcorn (plain, air-popped)","r":"Popcorn simplu","k":387.0,"p":12.9,"f":4.5,"b":77.9,"i":14.5,"s":0.9},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Quinoa (raw)","r":"Quinoa (crudă)","k":368.0,"p":14.1,"f":6.1,"b":64.2,"i":7.0,"s":0.9},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Rice bran","r":"Tărâțe de orez","k":316.0,"p":13.4,"f":20.9,"b":49.9,"i":21.0,"s":0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Rye flour","r":"Făină de secară","k":335.0,"p":8.5,"f":1.6,"b":69.8,"i":14.6,"s":1.0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Semolina","r":"Gris","k":360.0,"p":12.7,"f":1.1,"b":73.8,"i":3.9,"s":0.8},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Sorghum (raw)","r":"Sorg (crud)","k":339.0,"p":11.3,"f":3.3,"b":74.6,"i":6.3,"s":2.4},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Spelt (raw)","r":"Spelt (crud)","k":338.0,"p":14.6,"f":2.4,"b":70.2,"i":10.7,"s":0.7},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Tapioca (dry)","r":"Tapioca (uscată)","k":358.0,"p":0.2,"f":0,"b":88.7,"i":0.9,"s":3.4},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Teff (raw)","r":"Teff (crud)","k":367.0,"p":13.3,"f":2.4,"b":73.1,"i":8.0,"s":1.8},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Wheat bran","r":"Tărâțe de grâu","k":216.0,"p":15.6,"f":4.3,"b":64.5,"i":42.8,"s":0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Wheat flour (all-purpose)","r":"Făină de grâu (albă)","k":364.0,"p":10.3,"f":1.0,"b":76.3,"i":2.7,"s":0.3},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Wheat germ","r":"Germeni de grâu","k":360.0,"p":23.2,"f":9.7,"b":51.8,"i":13.2,"s":0},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"White rice (raw)","r":"Orez alb (crud)","k":365.0,"p":7.1,"f":0.7,"b":80.0,"i":1.3,"s":0.1},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Whole wheat flour","r":"Făină integrală de grâu","k":340.0,"p":13.2,"f":1.9,"b":72.0,"i":10.7,"s":0.4},{"c":"Grains & Cereals","cr":"Cereale & Grăunțe","n":"Wild rice (raw)","r":"Orez sălbatic (crud)","k":357.0,"p":14.7,"f":1.1,"b":74.9,"i":6.2,"s":2.5},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Allspice","r":"Ienibahar","k":263.0,"p":6.1,"f":8.7,"b":72.1,"i":21.6,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Basil (fresh)","r":"Busuioc (proaspăt)","k":23.0,"p":3.2,"f":0.6,"b":2.7,"i":1.6,"s":0.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Bay leaf (dried)","r":"Frunze de dafin (uscate)","k":313.0,"p":7.6,"f":8.4,"b":74.9,"i":26.3,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Black pepper","r":"Piper negru","k":251.0,"p":10.4,"f":3.3,"b":63.9,"i":25.3,"s":0.6},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Caraway seeds","r":"Chimion (semințe)","k":333.0,"p":19.8,"f":14.6,"b":49.9,"i":38.0,"s":0.8},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Cardamom","r":"Cardamom","k":311.0,"p":10.8,"f":6.7,"b":68.5,"i":28.0,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Chili flakes","r":"Fulgi de chili","k":282.0,"p":12.0,"f":14.5,"b":49.7,"i":27.2,"s":7.2},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Chili powder","r":"Piper cayenne","k":282.0,"p":13.5,"f":15.0,"b":49.7,"i":27.2,"s":7.2},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Cinnamon","r":"Scorțișoară","k":247.0,"p":4.0,"f":1.2,"b":80.6,"i":53.1,"s":2.2},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Cloves","r":"Cuișoare","k":274.0,"p":6.0,"f":13.0,"b":65.5,"i":33.9,"s":2.4},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Coriander (dried)","r":"Coriandru (uscat)","k":298.0,"p":12.4,"f":17.8,"b":54.9,"i":41.9,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Cumin","r":"Chimen","k":375.0,"p":17.8,"f":22.3,"b":44.2,"i":10.5,"s":2.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Dill (fresh)","r":"Mărar (proaspăt)","k":43.0,"p":3.5,"f":1.1,"b":7.0,"i":2.1,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Dried garlic powder","r":"Pudră de usturoi","k":331.0,"p":16.6,"f":0.7,"b":72.7,"i":9.0,"s":2.6},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Dried ginger powder","r":"Ghimbir uscat pudră","k":335.0,"p":8.7,"f":4.2,"b":71.6,"i":14.1,"s":3.4},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Dried onion flakes","r":"Fulgi de ceapă uscată","k":349.0,"p":8.6,"f":1.0,"b":83.3,"i":15.2,"s":24.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Fenugreek seeds","r":"Semințe schinduf","k":323.0,"p":23.0,"f":6.4,"b":58.4,"i":24.6,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Ginger (fresh)","r":"Ghimbir (proaspăt)","k":80.0,"p":1.8,"f":0.8,"b":17.8,"i":2.0,"s":1.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Horseradish","r":"Hrean","k":48.0,"p":1.2,"f":0.7,"b":11.3,"i":3.3,"s":7.4},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Lemongrass (fresh)","r":"Iarbă de lămâie (proaspătă)","k":99.0,"p":1.8,"f":0.5,"b":25.3,"i":0,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Marjoram (dried)","r":"Maghiran uscat","k":271.0,"p":12.7,"f":7.0,"b":60.6,"i":40.3,"s":4.1},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Mint (fresh)","r":"Mentă (proaspătă)","k":70.0,"p":3.8,"f":0.9,"b":14.9,"i":8.0,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Mustard seeds","r":"Semințe de muștar","k":508.0,"p":26.1,"f":36.2,"b":28.1,"i":12.2,"s":6.9},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Nutmeg","r":"Nucșoară","k":525.0,"p":5.8,"f":36.3,"b":49.3,"i":20.8,"s":2.9},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Onion powder","r":"Pudră de ceapă","k":341.0,"p":10.4,"f":1.0,"b":79.1,"i":15.2,"s":9.9},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Oregano (dried)","r":"Oregano (uscat)","k":265.0,"p":9.0,"f":4.3,"b":68.9,"i":42.5,"s":4.1},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Paprika","r":"Boia de ardei","k":282.0,"p":14.1,"f":12.9,"b":53.9,"i":34.9,"s":10.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Parsley (fresh)","r":"Pătrunjel (proaspăt)","k":36.0,"p":3.0,"f":0.8,"b":6.3,"i":3.3,"s":0.9},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Rosemary (fresh)","r":"Rozmarin (proaspăt)","k":131.0,"p":3.3,"f":5.9,"b":20.7,"i":14.1,"s":0.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Saffron","r":"Șofran","k":310.0,"p":11.4,"f":5.9,"b":65.4,"i":3.9,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Sage (fresh)","r":"Salvie (proaspătă)","k":315.0,"p":10.6,"f":12.8,"b":60.7,"i":40.3,"s":1.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Salt","r":"Sare","k":0,"p":0,"f":0,"b":0,"i":0,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Savory (dried)","r":"Cimbru de grădină uscat","k":272.0,"p":6.7,"f":5.9,"b":68.7,"i":45.7,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Smoked paprika","r":"Boia afumată","k":282.0,"p":14.1,"f":12.9,"b":53.9,"i":34.9,"s":10.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Star anise","r":"Anason stelat","k":337.0,"p":17.6,"f":15.9,"b":50.0,"i":14.6,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Sumac","r":"Sumac","k":314.0,"p":3.4,"f":3.7,"b":76.2,"i":24.6,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Szechuan pepper","r":"Piper Szechuan","k":251.0,"p":6.7,"f":8.9,"b":62.1,"i":21.0,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Tamarind paste","r":"Pastă de tamarind","k":278.0,"p":3.5,"f":0.6,"b":72.5,"i":5.1,"s":57.4},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Tarragon (fresh)","r":"Tarhon (proaspăt)","k":295.0,"p":22.8,"f":7.2,"b":50.2,"i":7.4,"s":1.9},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Thyme (dried)","r":"Cimbru (uscat)","k":276.0,"p":9.1,"f":7.4,"b":63.9,"i":37.0,"s":1.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Turmeric","r":"Turmeric","k":354.0,"p":7.8,"f":9.9,"b":64.9,"i":21.1,"s":3.2},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Vanilla bean (whole)","r":"Păstaie de vanilie","k":288.0,"p":0.1,"f":0.1,"b":12.7,"i":0,"s":12.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Vanilla extract","r":"Extract de vanilie","k":288.0,"p":0.1,"f":0.1,"b":12.7,"i":0,"s":12.7},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Wasabi","r":"Wasabi","k":109.0,"p":4.8,"f":0.6,"b":23.5,"i":7.8,"s":16.3},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"White pepper","r":"Piper alb","k":296.0,"p":10.4,"f":2.1,"b":68.6,"i":26.2,"s":0},{"c":"Herbs & Spices","cr":"Ierburi & Condimente","n":"Za'atar","r":"Za'atar","k":270.0,"p":9.5,"f":7.0,"b":46.4,"i":14.2,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"Adzuki beans (raw)","r":"Fasole adzuki (crudă)","k":329.0,"p":19.9,"f":0.5,"b":62.9,"i":12.7,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"Beluga lentils (raw)","r":"Linte beluga (crudă)","k":353.0,"p":26.0,"f":1.0,"b":60.0,"i":30.5,"s":2.0},{"c":"Legumes","cr":"Leguminoase","n":"Black beans (raw)","r":"Fasole neagră (crudă)","k":341.0,"p":21.6,"f":1.4,"b":62.4,"i":15.5,"s":2.1},{"c":"Legumes","cr":"Leguminoase","n":"Black-eyed peas (raw)","r":"Fasole cu ochi negru (crudă)","k":336.0,"p":23.5,"f":1.3,"b":60.0,"i":10.9,"s":4.8},{"c":"Legumes","cr":"Leguminoase","n":"Chana dal (raw)","r":"Chana dal (crud)","k":364.0,"p":22.5,"f":5.0,"b":61.0,"i":17.4,"s":10.7},{"c":"Legumes","cr":"Leguminoase","n":"Chickpea sprouts","r":"Năut încolțit","k":164.0,"p":11.0,"f":3.5,"b":27.7,"i":7.0,"s":5.0},{"c":"Legumes","cr":"Leguminoase","n":"Chickpeas (raw)","r":"Năut (crud)","k":378.0,"p":20.5,"f":6.0,"b":62.9,"i":17.4,"s":10.7},{"c":"Legumes","cr":"Leguminoase","n":"Edamame (raw)","r":"Edamame (crude)","k":122.0,"p":11.9,"f":5.2,"b":8.9,"i":5.2,"s":2.2},{"c":"Legumes","cr":"Leguminoase","n":"Fava beans (raw)","r":"Fave (crude)","k":341.0,"p":26.1,"f":1.5,"b":58.3,"i":25.0,"s":5.7},{"c":"Legumes","cr":"Leguminoase","n":"Green lentils (raw)","r":"Linte verde (crudă)","k":352.0,"p":24.6,"f":1.1,"b":60.1,"i":30.5,"s":2.0},{"c":"Legumes","cr":"Leguminoase","n":"Kidney beans (raw)","r":"Fasole roșie (crudă)","k":337.0,"p":22.5,"f":0.8,"b":61.3,"i":24.9,"s":2.2},{"c":"Legumes","cr":"Leguminoase","n":"Lentil sprouts","r":"Linte încolțită","k":106.0,"p":9.0,"f":0.5,"b":21.3,"i":11.0,"s":4.0},{"c":"Legumes","cr":"Leguminoase","n":"Lentils (raw)","r":"Linte (crudă)","k":353.0,"p":25.8,"f":1.1,"b":60.1,"i":30.5,"s":2.0},{"c":"Legumes","cr":"Leguminoase","n":"Lima beans (raw)","r":"Fasole lima (crudă)","k":338.0,"p":21.5,"f":0.7,"b":63.4,"i":19.0,"s":3.2},{"c":"Legumes","cr":"Leguminoase","n":"Lupini beans (raw)","r":"Fasole lupin (crudă)","k":371.0,"p":36.2,"f":9.7,"b":40.4,"i":18.9,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"Moth beans (raw)","r":"Fasole moth (crudă)","k":343.0,"p":22.9,"f":1.6,"b":61.3,"i":0,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"Mung beans (raw)","r":"Fasole mung (crudă)","k":347.0,"p":23.9,"f":1.2,"b":62.6,"i":16.3,"s":6.6},{"c":"Legumes","cr":"Leguminoase","n":"Navy beans (raw)","r":"Fasole navy (crudă)","k":337.0,"p":22.3,"f":1.5,"b":60.8,"i":24.4,"s":3.0},{"c":"Legumes","cr":"Leguminoase","n":"Pigeon peas / Toor dal (raw)","r":"Mazăre porumbel / Toor dal","k":343.0,"p":21.7,"f":1.5,"b":62.8,"i":15.0,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"Pinto beans (raw)","r":"Fasole pinto (crudă)","k":347.0,"p":21.4,"f":1.2,"b":62.6,"i":15.5,"s":2.1},{"c":"Legumes","cr":"Leguminoase","n":"Red lentils (raw)","r":"Linte roșie (crudă)","k":352.0,"p":26.0,"f":1.1,"b":60.1,"i":30.5,"s":2.0},{"c":"Legumes","cr":"Leguminoase","n":"Soybean (raw)","r":"Soia (crudă)","k":446.0,"p":36.5,"f":19.9,"b":30.2,"i":9.3,"s":7.3},{"c":"Legumes","cr":"Leguminoase","n":"Split peas (raw)","r":"Mazăre uscată (crudă)","k":341.0,"p":24.6,"f":1.2,"b":60.4,"i":26.1,"s":8.0},{"c":"Legumes","cr":"Leguminoase","n":"Urad dal (raw)","r":"Urad dal (crud)","k":347.0,"p":25.2,"f":1.6,"b":59.0,"i":18.3,"s":0},{"c":"Legumes","cr":"Leguminoase","n":"White beans (raw)","r":"Fasole albă (crudă)","k":333.0,"p":23.4,"f":0.8,"b":60.3,"i":15.2,"s":2.1},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Andouille sausage","r":"Cârnat andouille","k":339.0,"p":15.0,"f":29.0,"b":2.5,"i":0,"s":1.0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Bacon (pork)","r":"Bacon (porc)","k":541.0,"p":37.0,"f":42.0,"b":1.4,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Bear meat (raw)","r":"Carne de urs (crudă)","k":163.0,"p":20.1,"f":8.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef (ground, lean)","r":"Carne tocată vită (slabă)","k":215.0,"p":26.1,"f":12.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef T-bone steak (raw)","r":"Steak T-bone vită (crud)","k":250.0,"p":21.0,"f":18.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef brain (raw)","r":"Creier de vită (crud)","k":151.0,"p":10.9,"f":11.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef brisket (raw)","r":"Piept de vită (crud)","k":340.0,"p":17.0,"f":30.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef chuck (raw)","r":"Gât/umăr de vită (crud)","k":258.0,"p":17.0,"f":21.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef flank steak (raw)","r":"Fleică de vită (crudă)","k":192.0,"p":22.0,"f":11.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef heart (raw)","r":"Inimă de vită (crudă)","k":112.0,"p":17.7,"f":4.0,"b":0.1,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef kidney (raw)","r":"Rinichi de vită (crud)","k":99.0,"p":17.4,"f":3.1,"b":1.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef liver (raw)","r":"Ficat de vită (crud)","k":135.0,"p":20.4,"f":3.6,"b":3.9,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef marrow bones","r":"Oase cu măduvă de vită","k":786.0,"p":6.8,"f":84.4,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef oxtail (raw)","r":"Coadă de vită (crudă)","k":262.0,"p":18.5,"f":20.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef ribeye steak (raw)","r":"Entrecôte de vită (crud)","k":291.0,"p":18.0,"f":24.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef rump (raw)","r":"Pulpă de vită (crudă)","k":187.0,"p":22.0,"f":11.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef shank (raw)","r":"Jarret de vită (crud)","k":155.0,"p":22.0,"f":7.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef short ribs (raw)","r":"Coaste scurte de vită (crude)","k":295.0,"p":18.0,"f":24.8,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef skirt steak (raw)","r":"Friptură skirt vită (crudă)","k":212.0,"p":21.4,"f":13.4,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef spleen (raw)","r":"Splină de vită (crudă)","k":103.0,"p":18.3,"f":2.9,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef steak (sirloin)","r":"Friptură de vită (antricot)","k":207.0,"p":26.0,"f":11.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef tenderloin / fillet (raw)","r":"Mușchi de vită (crud)","k":175.0,"p":21.0,"f":10.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef tongue (raw)","r":"Limbă de vită (crudă)","k":224.0,"p":14.9,"f":17.5,"b":0.4,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Beef tripe (raw)","r":"Burtă de vită (crudă)","k":85.0,"p":14.8,"f":2.9,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Bison (raw)","r":"Bizon (crud)","k":146.0,"p":28.4,"f":2.4,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Blood sausage / Black pudding","r":"Sângerete / Caltaboș","k":379.0,"p":14.0,"f":34.5,"b":2.5,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Bratwurst (raw)","r":"Bratwurst (crud)","k":333.0,"p":14.0,"f":29.0,"b":1.5,"i":0,"s":0.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Caribou / Reindeer (raw)","r":"Ren (crud)","k":127.0,"p":22.6,"f":3.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken back (raw)","r":"Spate de pui (crud)","k":186.0,"p":16.0,"f":13.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken breast (raw)","r":"Piept de pui (crud)","k":120.0,"p":22.5,"f":2.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken drumstick (raw)","r":"Pulpiță de pui (crudă)","k":172.0,"p":19.0,"f":10.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken feet (raw)","r":"Labe de pui (crude)","k":215.0,"p":19.4,"f":14.6,"b":0.2,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken gizzard (raw)","r":"Pipotă de pui (crudă)","k":94.0,"p":17.7,"f":2.1,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken heart (raw)","r":"Inimă de pui (crudă)","k":153.0,"p":15.6,"f":9.3,"b":0.1,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken liver (raw)","r":"Ficat de pui (crud)","k":119.0,"p":16.9,"f":4.8,"b":0.7,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken neck (raw)","r":"Gât de pui (crud)","k":200.0,"p":16.0,"f":15.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken thigh (raw)","r":"Coapsă de pui (crudă)","k":177.0,"p":18.3,"f":11.2,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken whole (raw)","r":"Pui întreg (crud)","k":172.0,"p":18.6,"f":10.9,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chicken wing (raw)","r":"Aripă de pui (crudă)","k":203.0,"p":18.3,"f":13.9,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Chorizo (cured)","r":"Chorizo (afumat)","k":455.0,"p":24.1,"f":38.3,"b":1.9,"i":0,"s":0.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Cooked ham (low-fat)","r":"Șuncă presată (slabă)","k":107.0,"p":18.0,"f":3.0,"b":1.5,"i":0,"s":1.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Corned beef","r":"Vită sărată / Corned beef","k":251.0,"p":18.5,"f":19.0,"b":0.5,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Dried beef jerky","r":"Biltong / Jerky de vită","k":336.0,"p":55.0,"f":7.0,"b":3.1,"i":0.5,"s":0.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Duck breast (raw)","r":"Piept de rață (crud)","k":200.0,"p":17.0,"f":13.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Duck leg (raw)","r":"Pulpă de rață (crudă)","k":270.0,"p":14.0,"f":23.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Duck liver / Foie gras","r":"Ficat de rată / Foie gras","k":462.0,"p":8.5,"f":43.8,"b":4.7,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Duck whole (raw)","r":"Rață întreagă (crudă)","k":337.0,"p":11.5,"f":31.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Elk / Moose (raw)","r":"Elan (crud)","k":109.0,"p":22.7,"f":1.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Goat meat (raw)","r":"Carne de capră (crudă)","k":109.0,"p":20.6,"f":2.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Goose (raw)","r":"Gâscă (crudă)","k":371.0,"p":16.0,"f":33.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Goose liver (raw)","r":"Ficat de gâscă (crud)","k":133.0,"p":16.4,"f":5.7,"b":2.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ground beef (70/30)","r":"Carne tocată vită 70/30","k":332.0,"p":14.0,"f":30.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ground beef (80/20)","r":"Carne tocată vită 80/20","k":254.0,"p":17.0,"f":20.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ground beef (90/10)","r":"Carne tocată vită 90/10","k":176.0,"p":20.0,"f":10.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ground lamb (raw)","r":"Carne tocată de miel (crudă)","k":282.0,"p":16.0,"f":24.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ground pork (raw)","r":"Carne tocată de porc (crudă)","k":263.0,"p":15.0,"f":22.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Guinea fowl (raw)","r":"Bibilică (crudă)","k":158.0,"p":21.0,"f":8.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ham (cooked)","r":"Șuncă (fiartă)","k":145.0,"p":18.0,"f":7.0,"b":1.5,"i":0,"s":1.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Horse meat (raw)","r":"Carne de cal (crudă)","k":133.0,"p":21.4,"f":4.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Hot dog / Frankfurt","r":"Cârnăcior vienez","k":290.0,"p":11.0,"f":26.0,"b":2.9,"i":0,"s":1.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Kangaroo (raw)","r":"Cangur (crud)","k":98.0,"p":22.0,"f":1.1,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Kielbasa / Polish sausage","r":"Cârnați polonezi","k":325.0,"p":14.0,"f":28.5,"b":2.0,"i":0,"s":1.0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb (leg, raw)","r":"Pulpă de miel (crudă)","k":191.0,"p":19.0,"f":12.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb chop (raw)","r":"Cotlet de miel (crud)","k":282.0,"p":16.0,"f":24.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb kidney (raw)","r":"Rinichi de miel (crud)","k":91.0,"p":16.5,"f":2.7,"b":1.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb liver (raw)","r":"Ficat de miel (crud)","k":137.0,"p":20.5,"f":4.8,"b":2.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb rack / ribs (raw)","r":"Coaste de miel (crude)","k":294.0,"p":16.0,"f":25.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb shank (raw)","r":"Ciolan de miel (crud)","k":191.0,"p":19.0,"f":12.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lamb shoulder (raw)","r":"Spată de miel (crudă)","k":225.0,"p":16.0,"f":18.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Lard / Pig fat","r":"Slănină de porc / Grăsime","k":812.0,"p":2.9,"f":90.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Liver pâté","r":"Pate de ficat","k":319.0,"p":13.0,"f":28.0,"b":3.0,"i":0,"s":1.0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Mortadella","r":"Mortadelă","k":311.0,"p":14.0,"f":27.0,"b":1.5,"i":0,"s":1.5},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Mutton (mature sheep, raw)","r":"Carne de oaie matură (crudă)","k":258.0,"p":16.6,"f":21.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Ostrich (raw)","r":"Struț (crud)","k":143.0,"p":28.5,"f":2.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pastrami (beef)","r":"Pastramă de vită","k":145.0,"p":19.0,"f":6.5,"b":1.0,"i":0,"s":0.8},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pepperoni","r":"Pepperoni","k":494.0,"p":20.7,"f":44.5,"b":0.7,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pheasant (raw)","r":"Fazan (crud)","k":144.0,"p":24.4,"f":4.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pigeon / Squab (raw)","r":"Porumbel / Squab (crud)","k":294.0,"p":18.5,"f":24.2,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork belly (raw)","r":"Burtă de porc (crudă)","k":395.0,"p":9.3,"f":39.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork brain (raw)","r":"Creier de porc (crud)","k":150.0,"p":10.5,"f":11.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork crackling / Chicharrones","r":"Jumări / Chicharrones","k":544.0,"p":61.3,"f":31.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork ears (raw)","r":"Urechi de porc (crude)","k":210.0,"p":15.0,"f":17.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork heart (raw)","r":"Inimă de porc (crudă)","k":119.0,"p":17.0,"f":4.8,"b":0.5,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork kidney (raw)","r":"Rinichi de porc (crud)","k":97.0,"p":16.4,"f":3.2,"b":0.9,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork knuckle (raw)","r":"Ciolan de porc (crud)","k":248.0,"p":17.0,"f":20.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork leg / ham (raw)","r":"Pulpă de porc (crudă)","k":185.0,"p":20.0,"f":11.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork liver (raw)","r":"Ficat de porc (crud)","k":130.0,"p":20.0,"f":4.5,"b":2.5,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork loin (raw)","r":"Cotlet de porc (crud)","k":155.0,"p":21.0,"f":7.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork neck (raw)","r":"Ceafă de porc (crudă)","k":210.0,"p":18.0,"f":15.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork ribs (raw)","r":"Coaste de porc (crude)","k":263.0,"p":17.0,"f":21.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork shoulder (raw)","r":"Spată de porc (crudă)","k":186.0,"p":17.0,"f":13.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork skin / rind (raw)","r":"Șorici de porc (crud)","k":495.0,"p":28.0,"f":43.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork tenderloin (raw)","r":"Mușchi de porc (crud)","k":143.0,"p":22.0,"f":5.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork tongue (raw)","r":"Limbă de porc (crudă)","k":271.0,"p":14.0,"f":24.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Pork trotters / feet (raw)","r":"Picioare de porc (crude)","k":226.0,"p":16.4,"f":17.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Prosciutto / Dry-cured ham","r":"Prosciutto / Jambon crud","k":229.0,"p":25.9,"f":13.7,"b":0.3,"i":0,"s":0.3},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Quail (raw)","r":"Prepeliță (crudă)","k":192.0,"p":21.8,"f":11.1,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Rabbit (raw)","r":"Iepure (crud)","k":136.0,"p":20.1,"f":5.6,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Salami","r":"Salam","k":425.0,"p":21.7,"f":36.5,"b":1.2,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Sausage (pork)","r":"Cârnat de porc","k":301.0,"p":12.0,"f":27.0,"b":1.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Turkey breast (raw)","r":"Piept de curcan (crud)","k":104.0,"p":24.6,"f":0.7,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Turkey leg (raw)","r":"Pulpă de curcan (crudă)","k":144.0,"p":20.0,"f":6.9,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Turkey liver (raw)","r":"Ficat de curcan (crud)","k":134.0,"p":18.5,"f":5.0,"b":2.8,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Turkey wing (raw)","r":"Aripă de curcan (crudă)","k":186.0,"p":20.0,"f":11.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal (raw)","r":"Vițel (crud)","k":172.0,"p":19.1,"f":10.4,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal chop (raw)","r":"Cotlet de vițel (crud)","k":172.0,"p":19.1,"f":10.4,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal liver (raw)","r":"Ficat de vițel (crud)","k":140.0,"p":19.0,"f":6.0,"b":3.0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal scaloppine (raw)","r":"Escalop de vițel (crud)","k":128.0,"p":22.0,"f":4.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal shank (ossobuco, raw)","r":"Ciolan de vițel (ossobuco, crud)","k":155.0,"p":20.0,"f":7.5,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Veal sweetbread (raw)","r":"Ris de vițel (crud)","k":109.0,"p":16.5,"f":4.3,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Venison (raw)","r":"Carne de căprioară (crudă)","k":158.0,"p":26.5,"f":5.0,"b":0,"i":0,"s":0},{"c":"Meat & Poultry","cr":"Carne & Păsări","n":"Wild boar (raw)","r":"Mistreț (crud)","k":122.0,"p":21.5,"f":3.3,"b":0,"i":0,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Acorns (dried)","r":"Ghinde (uscate)","k":509.0,"p":8.1,"f":31.4,"b":54.4,"i":5.7,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Almonds","r":"Migdale","k":579.0,"p":21.2,"f":49.9,"b":21.7,"i":12.5,"s":4.4},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Brazil nuts","r":"Nuci braziliene","k":659.0,"p":14.3,"f":67.1,"b":11.7,"i":7.5,"s":2.3},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Cashews","r":"Caju","k":553.0,"p":18.2,"f":43.9,"b":30.2,"i":3.3,"s":5.9},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Chestnuts (raw)","r":"Castane (crude)","k":213.0,"p":2.4,"f":1.3,"b":45.5,"i":8.1,"s":11.0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Chestnuts (roasted)","r":"Castane (coapte)","k":245.0,"p":3.2,"f":2.2,"b":53.0,"i":5.1,"s":10.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Chia seeds","r":"Semințe de chia","k":486.0,"p":16.5,"f":30.7,"b":42.1,"i":34.4,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Coconut (fresh)","r":"Nucă de cocos (proaspătă)","k":354.0,"p":3.3,"f":33.5,"b":15.2,"i":9.0,"s":6.2},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Coconut chips (dried)","r":"Chipsuri de cocos","k":660.0,"p":6.9,"f":64.5,"b":23.7,"i":16.3,"s":7.0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Desiccated coconut","r":"Nucă de cocos uscată","k":660.0,"p":6.9,"f":64.5,"b":23.7,"i":16.3,"s":7.0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Flaxseeds","r":"Semințe de in","k":534.0,"p":18.3,"f":42.2,"b":28.9,"i":27.3,"s":1.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Hazelnuts","r":"Alune de pădure","k":628.0,"p":15.0,"f":60.8,"b":16.7,"i":9.7,"s":4.3},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Hemp seeds","r":"Semințe de cânepă","k":553.0,"p":31.6,"f":48.8,"b":8.7,"i":4.0,"s":1.5},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Macadamia nuts","r":"Nuci macadamia","k":718.0,"p":7.9,"f":75.8,"b":13.8,"i":8.6,"s":4.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Melon seeds","r":"Semințe de pepene galben","k":557.0,"p":28.8,"f":47.4,"b":10.0,"i":0.5,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Nigella seeds / Black cumin","r":"Semințe negre / Nigella","k":525.0,"p":18.0,"f":38.2,"b":44.2,"i":10.5,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Peanuts","r":"Arahide","k":567.0,"p":25.8,"f":49.2,"b":16.1,"i":8.5,"s":4.7},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Pecans","r":"Nuci pecan","k":691.0,"p":9.2,"f":72.0,"b":13.9,"i":9.6,"s":4.0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Pine nuts","r":"Semințe de pin","k":673.0,"p":13.7,"f":68.4,"b":13.1,"i":3.7,"s":3.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Pistachios","r":"Fistic","k":562.0,"p":20.2,"f":45.4,"b":27.5,"i":10.3,"s":7.7},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Poppy seeds","r":"Semințe de mac","k":525.0,"p":17.9,"f":41.6,"b":28.1,"i":19.5,"s":2.9},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Pumpkin seeds","r":"Semințe de dovleac","k":559.0,"p":30.2,"f":49.1,"b":10.7,"i":6.0,"s":1.4},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Sacha inchi seeds","r":"Semințe sacha inchi","k":566.0,"p":27.4,"f":47.1,"b":12.3,"i":0,"s":0},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Sesame seeds","r":"Semințe de susan","k":573.0,"p":17.7,"f":49.7,"b":23.5,"i":11.8,"s":0.3},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Sunflower seeds","r":"Semințe de floarea-soarelui","k":584.0,"p":20.8,"f":51.5,"b":20.0,"i":8.6,"s":2.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Walnuts","r":"Nuci","k":654.0,"p":15.2,"f":65.2,"b":13.7,"i":6.7,"s":2.6},{"c":"Nuts & Seeds","cr":"Nuci & Semințe","n":"Watermelon seeds (dried)","r":"Semințe de pepene verde uscate","k":557.0,"p":28.3,"f":47.4,"b":15.7,"i":0.5,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Avocado oil","r":"Ulei de avocado","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Beef tallow","r":"Seu de vită","k":902.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Canola oil","r":"Ulei de rapița","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Coconut oil","r":"Ulei de cocos","k":862.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Duck fat","r":"Grăsime de rață","k":897.0,"p":0,"f":99.7,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Flaxseed oil","r":"Ulei de in","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Ghee","r":"Ghee (unt clarificat)","k":900.0,"p":0,"f":99.8,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Grapeseed oil","r":"Ulei din semințe de struguri","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Lard","r":"Untură de porc","k":902.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"MCT oil","r":"Ulei MCT","k":869.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Margarine (light)","r":"Margarină light","k":419.0,"p":0.3,"f":46.5,"b":0.5,"i":0,"s":0.5},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Margarine (regular)","r":"Margarină obișnuită","k":719.0,"p":0.2,"f":80.7,"b":0.7,"i":0,"s":0.7},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Olive oil","r":"Ulei de măsline","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Palm oil","r":"Ulei de palmier","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Peanut oil","r":"Ulei de arahide","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Rice bran oil","r":"Ulei din tărâțe de orez","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Sesame oil","r":"Ulei de susan","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Sunflower oil","r":"Ulei de floarea-soarelui","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Vegetable shortening","r":"Grăsime vegetală solidă","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Oils & Fats","cr":"Uleiuri & Grăsimi","n":"Walnut oil","r":"Ulei de nuci","k":884.0,"p":0,"f":100.0,"b":0,"i":0,"s":0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Almond flour bread","r":"Pâine din făină de migdale","k":380.0,"p":14.0,"f":32.0,"b":12.0,"i":6.0,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Amaranth bread","r":"Pâine de amarant","k":258.0,"p":8.0,"f":3.5,"b":47.0,"i":4.0,"s":3.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Bagel (plain)","r":"Bagel (simplu)","k":270.0,"p":10.5,"f":1.8,"b":52.0,"i":2.1,"s":5.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Bagel (whole wheat)","r":"Bagel integral","k":250.0,"p":12.0,"f":2.0,"b":48.0,"i":5.0,"s":5.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Baguette (French bread)","r":"Baghetă franceză","k":270.0,"p":9.0,"f":1.5,"b":53.0,"i":2.5,"s":2.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Bread roll (white)","r":"Chiflă albă","k":280.0,"p":9.0,"f":2.5,"b":54.0,"i":2.5,"s":5.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Bread roll (whole grain)","r":"Chiflă integrală","k":262.0,"p":10.0,"f":3.0,"b":48.0,"i":6.0,"s":5.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Breadstick (grissini)","r":"Grisinii","k":392.0,"p":11.7,"f":7.9,"b":70.0,"i":3.6,"s":2.8},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Brioche","r":"Brioșă","k":356.0,"p":9.0,"f":15.0,"b":47.0,"i":1.5,"s":11.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Buckwheat bread","r":"Pâine de hrișcă","k":245.0,"p":8.5,"f":2.5,"b":47.0,"i":4.5,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Buckwheat pasta (dry)","r":"Paste din hrișcă (uscate)","k":350.0,"p":12.0,"f":1.5,"b":72.0,"i":5.0,"s":2.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Chapati / Roti","r":"Chapati / Roti","k":328.0,"p":10.0,"f":9.5,"b":51.0,"i":3.5,"s":1.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Chestnut flour bread","r":"Pâine din făină de castane","k":244.0,"p":5.0,"f":2.5,"b":52.0,"i":6.0,"s":15.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Ciabatta","r":"Ciabatta","k":262.0,"p":9.6,"f":1.7,"b":51.0,"i":2.2,"s":1.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Coconut flour bread","r":"Pâine din făină de cocos","k":230.0,"p":10.0,"f":8.0,"b":32.0,"i":12.0,"s":6.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Corn bread","r":"Pâine de porumb","k":305.0,"p":5.4,"f":12.5,"b":43.2,"i":1.1,"s":12.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Crackers (whole grain)","r":"Biscuiți (cereale integrale)","k":429.0,"p":9.4,"f":15.0,"b":67.6,"i":7.3,"s":6.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Crispbread (rye)","r":"Crispbread din secară","k":357.0,"p":11.0,"f":2.0,"b":70.0,"i":18.0,"s":2.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Croissant","r":"Croissant","k":406.0,"p":8.2,"f":21.0,"b":45.8,"i":1.7,"s":11.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Egg noodles (dry)","r":"Tăiței cu ou (uscați)","k":384.0,"p":13.0,"f":4.5,"b":71.6,"i":2.5,"s":1.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"English muffin","r":"Muffin englezesc","k":223.0,"p":8.0,"f":1.6,"b":43.0,"i":2.0,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Focaccia","r":"Focaccia","k":284.0,"p":7.0,"f":9.0,"b":43.0,"i":2.0,"s":1.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Glass noodles / Cellophane","r":"Tăiței de sticlă","k":351.0,"p":0.2,"f":0.1,"b":86.9,"i":0.5,"s":0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Gluten-free bread","r":"Pâine fără gluten","k":220.0,"p":3.5,"f":4.0,"b":44.0,"i":2.5,"s":4.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Gnocchi (potato, fresh)","r":"Gnocchi (cartofi, proaspeți)","k":174.0,"p":3.2,"f":1.0,"b":36.0,"i":1.5,"s":0.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Injera (teff flatbread)","r":"Injera (lipie de teff)","k":170.0,"p":5.7,"f":0.8,"b":35.4,"i":2.2,"s":0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Lavash bread","r":"Pâine lavash","k":297.0,"p":10.5,"f":2.5,"b":59.0,"i":2.5,"s":2.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Matzah / Matzo","r":"Matzah","k":388.0,"p":10.6,"f":1.4,"b":82.5,"i":3.3,"s":1.3},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Multigrain bread","r":"Pâine multicereale","k":250.0,"p":10.0,"f":3.5,"b":43.0,"i":5.5,"s":4.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Naan bread","r":"Pâine naan","k":317.0,"p":9.0,"f":5.0,"b":57.0,"i":2.0,"s":4.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Oat bread","r":"Pâine de ovăz","k":260.0,"p":9.0,"f":3.5,"b":45.0,"i":3.5,"s":4.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Paratha","r":"Paratha","k":326.0,"p":8.0,"f":12.0,"b":49.0,"i":3.0,"s":1.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pasta (dry, white)","r":"Paste (uscate, albe)","k":371.0,"p":13.0,"f":1.5,"b":74.7,"i":3.2,"s":2.7},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pasta (dry, whole wheat)","r":"Paste integrale (uscate)","k":348.0,"p":14.6,"f":2.5,"b":70.6,"i":8.5,"s":2.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pita bread (white)","r":"Lipie pita (albă)","k":275.0,"p":9.1,"f":1.2,"b":55.7,"i":2.2,"s":1.6},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pita bread (whole wheat)","r":"Lipie pita integrală","k":266.0,"p":10.7,"f":1.8,"b":53.3,"i":5.2,"s":1.3},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Potato bread","r":"Pâine de cartofi","k":271.0,"p":9.0,"f":4.0,"b":50.0,"i":2.0,"s":6.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pretzel (hard/salted)","r":"Covrig tare (sărat)","k":381.0,"p":8.8,"f":2.6,"b":80.0,"i":3.0,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pretzel (soft)","r":"Covrig moale","k":237.0,"p":7.6,"f":1.8,"b":47.3,"i":2.1,"s":2.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Pumpernickel bread","r":"Pâine pumpernickel","k":250.0,"p":8.5,"f":3.3,"b":45.8,"i":6.2,"s":1.1},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Quinoa bread","r":"Pâine de quinoa","k":252.0,"p":9.0,"f":3.5,"b":46.0,"i":4.5,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Rice cakes","r":"Turte de orez","k":387.0,"p":8.2,"f":3.1,"b":81.5,"i":3.0,"s":0.8},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Rice flour bread","r":"Pâine din făină de orez","k":266.0,"p":5.5,"f":3.5,"b":53.0,"i":2.0,"s":4.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Rice noodles (dry)","r":"Tăiței de orez (uscați)","k":364.0,"p":6.0,"f":0.6,"b":80.7,"i":1.8,"s":0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Rye bread (100%)","r":"Pâine de secară 100%","k":259.0,"p":8.5,"f":3.3,"b":48.3,"i":6.2,"s":3.8},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Scone (plain)","r":"Scone (simplu)","k":364.0,"p":7.0,"f":15.0,"b":52.0,"i":1.5,"s":9.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Soba noodles (dry)","r":"Noodles soba (uscați)","k":348.0,"p":14.0,"f":1.0,"b":70.0,"i":2.5,"s":0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Sourdough (white flour)","r":"Pâine cu maia (făină albă)","k":267.0,"p":8.8,"f":1.2,"b":51.5,"i":2.4,"s":2.3},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Sourdough (whole wheat)","r":"Pâine cu maia (integrală)","k":252.0,"p":10.0,"f":1.8,"b":47.0,"i":5.0,"s":2.5},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Sourdough bread","r":"Pâine cu maia","k":267.0,"p":8.8,"f":1.2,"b":51.5,"i":2.4,"s":2.3},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Spelt bread","r":"Pâine de spelt","k":240.0,"p":10.0,"f":2.0,"b":44.0,"i":5.0,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Spelt pasta (dry)","r":"Paste din spelt (uscate)","k":350.0,"p":14.0,"f":2.5,"b":68.0,"i":7.5,"s":2.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Teff bread","r":"Pâine de teff","k":246.0,"p":8.5,"f":2.0,"b":49.0,"i":5.0,"s":3.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Tortilla (corn)","r":"Tortilla de porumb","k":218.0,"p":5.6,"f":3.0,"b":44.6,"i":6.3,"s":0.7},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Tortilla (wheat)","r":"Tortilla (din grâu)","k":312.0,"p":8.0,"f":7.3,"b":51.1,"i":3.5,"s":3.2},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Udon noodles (dry)","r":"Noodles udon (uscați)","k":348.0,"p":10.0,"f":1.0,"b":73.0,"i":2.5,"s":1.0},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"White bread","r":"Pâine albă","k":265.0,"p":9.0,"f":3.2,"b":49.2,"i":2.7,"s":5.7},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"White wheat bread","r":"Pâine albă de grâu","k":265.0,"p":9.0,"f":3.2,"b":49.2,"i":2.7,"s":5.7},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Whole wheat bread","r":"Pâine integrală","k":247.0,"p":13.0,"f":3.4,"b":41.3,"i":6.9,"s":5.6},{"c":"Pasta & Bread","cr":"Paste & Pâine","n":"Whole wheat bread (100%)","r":"Pâine 100% integrală","k":247.0,"p":13.0,"f":3.4,"b":41.3,"i":6.9,"s":5.6},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Almond milk (full-fat, 2.5%)","r":"Lapte de migdale (gras, 2.5%)","k":35.0,"p":1.0,"f":2.5,"b":2.5,"i":0.3,"s":1.5},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Almond milk (unsweetened)","r":"Lapte de migdale (neîndulcit)","k":15.0,"p":0.6,"f":1.2,"b":0.6,"i":0.3,"s":0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Almond yogurt (2% fat)","r":"Iaurt de migdale (2% grăsime)","k":60.0,"p":2.0,"f":2.0,"b":8.0,"i":0.5,"s":5.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Cashew milk (2% fat)","r":"Lapte de caju (2% grăsime)","k":40.0,"p":1.0,"f":2.0,"b":4.0,"i":0,"s":0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Coconut milk (canned)","r":"Lapte de cocos (conservă)","k":197.0,"p":2.0,"f":21.3,"b":2.8,"i":0,"s":2.8},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Coconut milk (full-fat, 21%)","r":"Lapte de cocos integral (21% grăsime)","k":197.0,"p":2.0,"f":21.3,"b":2.8,"i":0,"s":2.8},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Coconut milk (light, 5% fat)","r":"Lapte de cocos light (5% grăsime)","k":67.0,"p":0.7,"f":5.0,"b":5.3,"i":0,"s":3.3},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Coconut yogurt (10% fat)","r":"Iaurt de cocos (10% grăsime)","k":123.0,"p":1.0,"f":10.0,"b":8.0,"i":0.3,"s":6.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Hazelnut milk (1.5% fat)","r":"Lapte de alune (1.5% grăsime)","k":46.0,"p":0.4,"f":1.5,"b":8.2,"i":0.3,"s":5.3},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Hemp milk (3% fat)","r":"Lapte de cânepă (3% grăsime)","k":46.0,"p":2.0,"f":3.0,"b":3.7,"i":0.3,"s":0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Macadamia milk (2% fat)","r":"Lapte de macadamia (2% grăsime)","k":50.0,"p":0.5,"f":2.0,"b":8.0,"i":0,"s":1.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Oat milk (barista, 3% fat)","r":"Lapte de ovăz barista (3% grăsime)","k":67.0,"p":1.4,"f":3.0,"b":8.0,"i":0.7,"s":4.5},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Oat milk (full-fat, 3.5%)","r":"Lapte de ovăz (3.5% grăsime)","k":72.0,"p":1.5,"f":3.5,"b":8.5,"i":0.8,"s":4.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Oat milk (skimmed, 0.5%)","r":"Lapte de ovăz (slab, 0.5%)","k":38.0,"p":1.0,"f":0.5,"b":7.0,"i":0.8,"s":4.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Oat milk (unsweetened)","r":"Lapte de ovăz (neîndulcit)","k":47.0,"p":1.0,"f":1.5,"b":6.6,"i":0.8,"s":4.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Oat yogurt (3% fat)","r":"Iaurt de ovăz (3% grăsime)","k":70.0,"p":2.0,"f":3.0,"b":10.0,"i":0.5,"s":5.5},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Pea milk (3% fat)","r":"Lapte din mazăre (3% grăsime)","k":55.0,"p":3.3,"f":3.0,"b":5.0,"i":0,"s":5.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Rice milk (1.5% fat)","r":"Lapte de orez (1.5% grăsime)","k":77.0,"p":0.3,"f":1.5,"b":15.8,"i":0.3,"s":6.7},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Soy milk (full-fat, 3.5%)","r":"Lapte de soia (gras, 3.5%)","k":58.0,"p":3.8,"f":3.5,"b":3.8,"i":0.5,"s":2.5},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Soy milk (low-fat, 1%)","r":"Lapte de soia (slab, 1%)","k":38.0,"p":3.5,"f":1.0,"b":3.5,"i":0.5,"s":2.0},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Soy milk (unsweetened)","r":"Lapte de soia (neîndulcit)","k":33.0,"p":3.3,"f":1.8,"b":1.7,"i":0.5,"s":1.3},{"c":"Plant Milks","cr":"Lapte vegetal","n":"Soy yogurt (3.5% fat)","r":"Iaurt din soia (3.5% grăsime)","k":67.0,"p":4.0,"f":3.5,"b":5.5,"i":0.3,"s":4.5},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Miso (red / aka)","r":"Miso roșu","k":199.0,"p":12.0,"f":6.0,"b":24.0,"i":5.4,"s":4.5},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Miso (white / shiro)","r":"Miso alb","k":199.0,"p":11.7,"f":6.0,"b":26.5,"i":5.4,"s":6.2},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Mycoprotein / Quorn","r":"Micoproteină / Quorn","k":86.0,"p":10.5,"f":2.7,"b":8.0,"i":6.0,"s":1.0},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Natto (fermented soy)","r":"Natto (soia fermentată)","k":211.0,"p":17.7,"f":11.0,"b":14.4,"i":5.4,"s":4.7},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Pea protein isolate","r":"Izolat proteină mazăre","k":369.0,"p":80.0,"f":7.0,"b":5.0,"i":1.0,"s":2.0},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Seitan","r":"Seitan","k":370.0,"p":75.2,"f":1.9,"b":13.8,"i":0.6,"s":0},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Soy protein isolate","r":"Izolat proteină soia","k":338.0,"p":80.7,"f":3.4,"b":7.1,"i":2.1,"s":0.5},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Tempeh","r":"Tempeh","k":193.0,"p":20.3,"f":10.8,"b":7.6,"i":4.1,"s":0},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Textured soy protein / TVP","r":"Proteină vegetală texturizată","k":328.0,"p":52.0,"f":3.5,"b":35.5,"i":17.0,"s":0},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Tofu (extra-firm)","r":"Tofu extra-ferm","k":162.0,"p":17.4,"f":9.5,"b":3.1,"i":2.3,"s":0.9},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Tofu (firm)","r":"Tofu (ferm)","k":144.0,"p":17.3,"f":8.7,"b":2.8,"i":2.3,"s":0.9},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Tofu (silken)","r":"Tofu mătăsos","k":55.0,"p":5.3,"f":2.7,"b":1.4,"i":0.3,"s":0.9},{"c":"Soy & Alternatives","cr":"Soia & Alternative","n":"Tofu (smoked)","r":"Tofu afumat","k":160.0,"p":15.0,"f":9.5,"b":5.0,"i":0.3,"s":0.9},{"c":"Sweeteners","cr":"Îndulcitori","n":"Agave nectar","r":"Nectar de agave","k":310.0,"p":0.1,"f":0.5,"b":76.4,"i":0.2,"s":68.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Brown sugar","r":"Zahăr brun","k":380.0,"p":0,"f":0,"b":98.1,"i":0,"s":97.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Coconut sugar","r":"Zahăr de cocos","k":375.0,"p":0,"f":0,"b":97.0,"i":0,"s":75.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Date sugar","r":"Zahăr din curmale","k":322.0,"p":2.5,"f":0.4,"b":75.0,"i":8.0,"s":63.4},{"c":"Sweeteners","cr":"Îndulcitori","n":"Fructose","r":"Fructoză","k":400.0,"p":0,"f":0,"b":100.0,"i":0,"s":100.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Glucose / Dextrose","r":"Glucoză / Dextroză","k":387.0,"p":0,"f":0,"b":100.0,"i":0,"s":100.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Honey","r":"Miere","k":304.0,"p":0.3,"f":0,"b":82.4,"i":0.2,"s":82.1},{"c":"Sweeteners","cr":"Îndulcitori","n":"Maltitol","r":"Maltitol","k":210.0,"p":0,"f":0,"b":100.0,"i":0,"s":0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Maple syrup","r":"Sirop de arțar","k":260.0,"p":0,"f":0.1,"b":67.1,"i":0,"s":60.5},{"c":"Sweeteners","cr":"Îndulcitori","n":"Molasses","r":"Melasă","k":290.0,"p":0,"f":0.1,"b":74.7,"i":0,"s":55.5},{"c":"Sweeteners","cr":"Îndulcitori","n":"Palm sugar / Gula melaka","r":"Zahăr de palmier","k":382.0,"p":0,"f":0,"b":98.0,"i":0,"s":80.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Rice malt syrup","r":"Sirop de malț din orez","k":316.0,"p":0,"f":0.1,"b":83.0,"i":0,"s":3.0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Stevia (powder)","r":"Stevia (pudră)","k":3.0,"p":0,"f":0,"b":0.9,"i":0,"s":0},{"c":"Sweeteners","cr":"Îndulcitori","n":"White sugar","r":"Zahăr alb","k":387.0,"p":0,"f":0,"b":99.8,"i":0,"s":99.8},{"c":"Sweeteners","cr":"Îndulcitori","n":"Xylitol","r":"Xilitol","k":240.0,"p":0,"f":0,"b":100.0,"i":0,"s":0},{"c":"Sweeteners","cr":"Îndulcitori","n":"Yacon syrup","r":"Sirop de yacon","k":220.0,"p":0.5,"f":0.3,"b":50.0,"i":25.0,"s":0},{"c":"Vegetables","cr":"Legume","n":"Acorn squash","r":"Dovleac ghindă","k":40.0,"p":0.8,"f":0.1,"b":10.0,"i":1.5,"s":0},{"c":"Vegetables","cr":"Legume","n":"Artichoke","r":"Anghinare","k":47.0,"p":3.3,"f":0.2,"b":10.5,"i":5.4,"s":1.0},{"c":"Vegetables","cr":"Legume","n":"Arugula","r":"Rucola","k":25.0,"p":2.6,"f":0.7,"b":3.7,"i":1.6,"s":2.1},{"c":"Vegetables","cr":"Legume","n":"Asparagus","r":"Sparanghel","k":20.0,"p":2.2,"f":0.1,"b":3.9,"i":2.1,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Baby spinach","r":"Spanac baby","k":23.0,"p":2.9,"f":0.4,"b":3.6,"i":2.2,"s":0.4},{"c":"Vegetables","cr":"Legume","n":"Bamboo shoots","r":"Lăstari de bambus","k":27.0,"p":2.6,"f":0.3,"b":5.2,"i":2.2,"s":3.0},{"c":"Vegetables","cr":"Legume","n":"Banana pepper","r":"Ardei banana","k":27.0,"p":1.7,"f":0.6,"b":4.7,"i":3.4,"s":2.5},{"c":"Vegetables","cr":"Legume","n":"Beetroot","r":"Sfeclă roșie","k":43.0,"p":1.6,"f":0.2,"b":9.6,"i":2.8,"s":6.8},{"c":"Vegetables","cr":"Legume","n":"Bell pepper (green)","r":"Ardei gras verde","k":20.0,"p":0.9,"f":0.2,"b":4.6,"i":1.7,"s":2.4},{"c":"Vegetables","cr":"Legume","n":"Bell pepper (red)","r":"Ardei gras roșu","k":31.0,"p":1.0,"f":0.3,"b":6.0,"i":2.1,"s":4.2},{"c":"Vegetables","cr":"Legume","n":"Bitter melon / Bitter gourd","r":"Dovlecel amar / Karela","k":17.0,"p":1.0,"f":0.2,"b":3.7,"i":2.8,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Black radish","r":"Ridiche neagră","k":36.0,"p":1.5,"f":0.1,"b":8.0,"i":3.0,"s":4.6},{"c":"Vegetables","cr":"Legume","n":"Bok choy","r":"Bok choy","k":13.0,"p":1.5,"f":0.2,"b":2.2,"i":1.0,"s":1.2},{"c":"Vegetables","cr":"Legume","n":"Broccoli","r":"Broccoli","k":34.0,"p":2.8,"f":0.4,"b":6.6,"i":2.6,"s":1.7},{"c":"Vegetables","cr":"Legume","n":"Broccolini","r":"Broccolini","k":35.0,"p":3.1,"f":0.4,"b":5.9,"i":2.0,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Brussels sprouts","r":"Varză de Bruxelles","k":43.0,"p":3.4,"f":0.3,"b":8.9,"i":3.8,"s":2.2},{"c":"Vegetables","cr":"Legume","n":"Butternut squash","r":"Dovleac butternut","k":45.0,"p":1.0,"f":0.1,"b":11.7,"i":2.0,"s":2.2},{"c":"Vegetables","cr":"Legume","n":"Cabbage","r":"Varză","k":25.0,"p":1.3,"f":0.1,"b":5.8,"i":2.5,"s":3.2},{"c":"Vegetables","cr":"Legume","n":"Carrot","r":"Morcov","k":41.0,"p":0.9,"f":0.2,"b":9.6,"i":2.8,"s":4.7},{"c":"Vegetables","cr":"Legume","n":"Cassava / Yuca","r":"Manioc / Yuca","k":160.0,"p":1.4,"f":0.3,"b":38.1,"i":1.8,"s":1.7},{"c":"Vegetables","cr":"Legume","n":"Cauliflower","r":"Conopidă","k":25.0,"p":1.9,"f":0.3,"b":5.0,"i":2.0,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Celeriac","r":"Rădăcină de țelină","k":42.0,"p":1.5,"f":0.3,"b":9.2,"i":1.8,"s":1.6},{"c":"Vegetables","cr":"Legume","n":"Celery","r":"Țelină (tulpini)","k":16.0,"p":0.7,"f":0.2,"b":3.0,"i":1.6,"s":1.8},{"c":"Vegetables","cr":"Legume","n":"Cherry tomato","r":"Tomate cherry","k":18.0,"p":0.9,"f":0.2,"b":3.9,"i":1.2,"s":2.6},{"c":"Vegetables","cr":"Legume","n":"Chinese cabbage / Napa","r":"Varză chinezească / Napa","k":13.0,"p":1.5,"f":0.2,"b":2.2,"i":1.0,"s":1.2},{"c":"Vegetables","cr":"Legume","n":"Chives","r":"Arpagic (frunze)","k":30.0,"p":3.3,"f":0.7,"b":4.4,"i":2.5,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Collard greens","r":"Varză collard","k":32.0,"p":3.0,"f":0.6,"b":5.7,"i":4.0,"s":0.5},{"c":"Vegetables","cr":"Legume","n":"Corn (sweet, raw)","r":"Porumb dulce (crud)","k":86.0,"p":3.2,"f":1.2,"b":18.7,"i":2.0,"s":3.2},{"c":"Vegetables","cr":"Legume","n":"Cucumber","r":"Castravete","k":16.0,"p":0.7,"f":0.1,"b":3.6,"i":0.5,"s":1.7},{"c":"Vegetables","cr":"Legume","n":"Daikon radish","r":"Ridiche daikon","k":18.0,"p":0.6,"f":0.1,"b":4.1,"i":1.6,"s":2.5},{"c":"Vegetables","cr":"Legume","n":"Dandelion greens","r":"Frunze de păpădie","k":45.0,"p":2.7,"f":0.7,"b":9.2,"i":3.5,"s":0.7},{"c":"Vegetables","cr":"Legume","n":"Drumstick / Moringa pods","r":"Moringa / Bețe de tobă","k":37.0,"p":2.1,"f":0.2,"b":8.5,"i":3.2,"s":4.0},{"c":"Vegetables","cr":"Legume","n":"Eggplant","r":"Vânătă","k":25.0,"p":1.0,"f":0.2,"b":5.9,"i":3.0,"s":3.5},{"c":"Vegetables","cr":"Legume","n":"Endive","r":"Andivă","k":17.0,"p":1.3,"f":0.2,"b":3.4,"i":3.1,"s":0.2},{"c":"Vegetables","cr":"Legume","n":"Fennel","r":"Fenicul","k":31.0,"p":1.2,"f":0.2,"b":7.3,"i":3.1,"s":3.9},{"c":"Vegetables","cr":"Legume","n":"Garlic","r":"Usturoi","k":149.0,"p":6.4,"f":0.5,"b":33.1,"i":2.1,"s":1.0},{"c":"Vegetables","cr":"Legume","n":"Ghost pepper / Bhut jolokia","r":"Ardei ghost pepper","k":40.0,"p":2.0,"f":0.4,"b":9.0,"i":1.5,"s":5.0},{"c":"Vegetables","cr":"Legume","n":"Green beans","r":"Fasole verde","k":31.0,"p":1.8,"f":0.1,"b":7.1,"i":3.4,"s":3.3},{"c":"Vegetables","cr":"Legume","n":"Habanero pepper","r":"Ardei habanero","k":40.0,"p":1.9,"f":0.4,"b":8.8,"i":1.4,"s":5.3},{"c":"Vegetables","cr":"Legume","n":"Heart of palm","r":"Inimă de palmier","k":36.0,"p":2.7,"f":0.4,"b":7.9,"i":3.5,"s":2.3},{"c":"Vegetables","cr":"Legume","n":"Iceberg lettuce","r":"Salată iceberg","k":14.0,"p":0.9,"f":0.1,"b":3.0,"i":1.2,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Jalapeño pepper","r":"Ardei jalapeño","k":29.0,"p":0.9,"f":0.4,"b":6.5,"i":2.5,"s":4.1},{"c":"Vegetables","cr":"Legume","n":"Jerusalem artichoke","r":"Topinambur","k":73.0,"p":2.0,"f":0,"b":17.4,"i":1.6,"s":9.6},{"c":"Vegetables","cr":"Legume","n":"Jicama","r":"Jicama","k":38.0,"p":0.7,"f":0.1,"b":8.8,"i":4.9,"s":1.8},{"c":"Vegetables","cr":"Legume","n":"Kale","r":"Kale","k":49.0,"p":4.3,"f":0.9,"b":8.8,"i":3.6,"s":2.3},{"c":"Vegetables","cr":"Legume","n":"Kelp (seaweed)","r":"Algă kelp","k":43.0,"p":1.7,"f":0.6,"b":9.6,"i":1.3,"s":0.6},{"c":"Vegetables","cr":"Legume","n":"Kimchi","r":"Kimchi","k":15.0,"p":1.1,"f":0.5,"b":2.4,"i":1.6,"s":1.0},{"c":"Vegetables","cr":"Legume","n":"Kohlrabi","r":"Gulie","k":27.0,"p":1.7,"f":0.1,"b":6.2,"i":3.6,"s":2.6},{"c":"Vegetables","cr":"Legume","n":"Leek","r":"Praz","k":61.0,"p":1.5,"f":0.3,"b":14.2,"i":1.8,"s":3.9},{"c":"Vegetables","cr":"Legume","n":"Leek (raw)","r":"Praz (crud)","k":61.0,"p":1.5,"f":0.3,"b":14.2,"i":1.8,"s":3.9},{"c":"Vegetables","cr":"Legume","n":"Lettuce","r":"Salată verde","k":15.0,"p":1.4,"f":0.2,"b":2.9,"i":1.3,"s":1.9},{"c":"Vegetables","cr":"Legume","n":"Lotus root","r":"Rădăcină de lotus","k":74.0,"p":2.6,"f":0.1,"b":17.2,"i":4.9,"s":0.5},{"c":"Vegetables","cr":"Legume","n":"Mangetout / Snow peas","r":"Mazăre de zahăr","k":42.0,"p":2.8,"f":0.2,"b":7.6,"i":2.6,"s":4.0},{"c":"Vegetables","cr":"Legume","n":"Morel mushroom","r":"Ciupercă zbârciog","k":31.0,"p":3.1,"f":0.6,"b":5.1,"i":2.8,"s":0.6},{"c":"Vegetables","cr":"Legume","n":"Mung bean sprouts","r":"Muguri de fasole mung","k":30.0,"p":3.1,"f":0.2,"b":5.9,"i":1.8,"s":4.1},{"c":"Vegetables","cr":"Legume","n":"Mushroom (button)","r":"Ciupercă (champignon)","k":22.0,"p":3.1,"f":0.3,"b":3.3,"i":1.0,"s":2.0},{"c":"Vegetables","cr":"Legume","n":"Mustard greens","r":"Frunze de muștar","k":27.0,"p":2.9,"f":0.4,"b":4.7,"i":3.2,"s":1.6},{"c":"Vegetables","cr":"Legume","n":"Nettles (stinging)","r":"Urzici","k":42.0,"p":7.3,"f":0.5,"b":6.9,"i":6.9,"s":0},{"c":"Vegetables","cr":"Legume","n":"Nopal / Prickly pear pad","r":"Cactus nopal","k":16.0,"p":1.3,"f":0.1,"b":3.3,"i":2.2,"s":0},{"c":"Vegetables","cr":"Legume","n":"Nori (seaweed)","r":"Nori (algă marină)","k":35.0,"p":5.8,"f":0.3,"b":5.1,"i":0.3,"s":0},{"c":"Vegetables","cr":"Legume","n":"Okra","r":"Bamă","k":33.0,"p":1.9,"f":0.2,"b":7.5,"i":3.2,"s":1.5},{"c":"Vegetables","cr":"Legume","n":"Onion","r":"Ceapă","k":40.0,"p":1.1,"f":0.1,"b":9.3,"i":1.7,"s":4.2},{"c":"Vegetables","cr":"Legume","n":"Oyster mushroom","r":"Ciupercă pleurotus","k":33.0,"p":3.3,"f":0.4,"b":6.1,"i":2.3,"s":1.1},{"c":"Vegetables","cr":"Legume","n":"Parsnip","r":"Păstârnac","k":75.0,"p":1.2,"f":0.3,"b":18.0,"i":4.9,"s":4.8},{"c":"Vegetables","cr":"Legume","n":"Peas (fresh)","r":"Mazăre (proaspătă)","k":81.0,"p":5.4,"f":0.4,"b":14.5,"i":5.1,"s":5.7},{"c":"Vegetables","cr":"Legume","n":"Pickle / Gherkin (in brine)","r":"Castraveți murați (în saramură)","k":11.0,"p":0.7,"f":0.2,"b":2.3,"i":1.2,"s":1.0},{"c":"Vegetables","cr":"Legume","n":"Plantain (green, raw)","r":"Banane plantain (verzi, crude)","k":122.0,"p":1.3,"f":0.4,"b":31.9,"i":2.3,"s":14.8},{"c":"Vegetables","cr":"Legume","n":"Portobello mushroom","r":"Ciupercă portobello","k":22.0,"p":2.1,"f":0.3,"b":3.9,"i":1.3,"s":2.5},{"c":"Vegetables","cr":"Legume","n":"Potato","r":"Cartof","k":77.0,"p":2.0,"f":0.1,"b":17.5,"i":2.2,"s":0.8},{"c":"Vegetables","cr":"Legume","n":"Pumpkin","r":"Dovleac","k":26.0,"p":1.0,"f":0.1,"b":6.5,"i":0.5,"s":2.8},{"c":"Vegetables","cr":"Legume","n":"Purslane","r":"Iarbă grasă","k":20.0,"p":2.0,"f":0.4,"b":3.4,"i":0,"s":0},{"c":"Vegetables","cr":"Legume","n":"Radicchio","r":"Radicchio","k":23.0,"p":1.4,"f":0.3,"b":4.5,"i":0.9,"s":0.6},{"c":"Vegetables","cr":"Legume","n":"Radish","r":"Ridiche","k":16.0,"p":0.7,"f":0.1,"b":3.4,"i":1.6,"s":2.0},{"c":"Vegetables","cr":"Legume","n":"Rhubarb (raw)","r":"Revent (crud)","k":21.0,"p":0.9,"f":0.2,"b":4.5,"i":1.8,"s":1.1},{"c":"Vegetables","cr":"Legume","n":"Romanesco broccoli","r":"Broccoli romanesco","k":25.0,"p":2.0,"f":0.3,"b":5.0,"i":3.0,"s":2.0},{"c":"Vegetables","cr":"Legume","n":"Sauerkraut","r":"Varză murată","k":19.0,"p":0.9,"f":0.1,"b":4.3,"i":2.9,"s":1.8},{"c":"Vegetables","cr":"Legume","n":"Savoy cabbage","r":"Varză creață","k":27.0,"p":2.0,"f":0.1,"b":6.1,"i":3.1,"s":2.3},{"c":"Vegetables","cr":"Legume","n":"Scotch bonnet pepper","r":"Ardei scotch bonnet","k":40.0,"p":2.0,"f":0.4,"b":9.0,"i":1.5,"s":5.0},{"c":"Vegetables","cr":"Legume","n":"Serrano pepper","r":"Ardei serrano","k":32.0,"p":1.7,"f":0.4,"b":6.7,"i":3.7,"s":3.7},{"c":"Vegetables","cr":"Legume","n":"Shallot","r":"Eșalotă","k":72.0,"p":2.5,"f":0.1,"b":16.8,"i":3.2,"s":7.9},{"c":"Vegetables","cr":"Legume","n":"Shiitake mushroom","r":"Ciupercă shiitake","k":34.0,"p":2.2,"f":0.5,"b":6.8,"i":2.5,"s":2.4},{"c":"Vegetables","cr":"Legume","n":"Sorrel","r":"Măcriș","k":22.0,"p":2.0,"f":0.7,"b":3.2,"i":2.9,"s":0},{"c":"Vegetables","cr":"Legume","n":"Spaghetti squash (raw)","r":"Dovleac spaghetti (crud)","k":31.0,"p":0.6,"f":0.6,"b":7.0,"i":1.5,"s":2.8},{"c":"Vegetables","cr":"Legume","n":"Spinach","r":"Spanac","k":23.0,"p":2.9,"f":0.4,"b":3.6,"i":2.2,"s":0.4},{"c":"Vegetables","cr":"Legume","n":"Spring onion / Scallion","r":"Ceapă verde","k":32.0,"p":1.8,"f":0.2,"b":7.3,"i":2.6,"s":2.3},{"c":"Vegetables","cr":"Legume","n":"Sugar snap peas","r":"Mazăre sugar snap","k":42.0,"p":2.8,"f":0.2,"b":7.6,"i":2.6,"s":4.0},{"c":"Vegetables","cr":"Legume","n":"Sun-dried tomato","r":"Roșii uscate la soare","k":258.0,"p":14.1,"f":3.0,"b":55.8,"i":12.3,"s":37.6},{"c":"Vegetables","cr":"Legume","n":"Swede / Rutabaga","r":"Nap suedez / Rutabaga","k":38.0,"p":1.1,"f":0.2,"b":8.7,"i":2.3,"s":4.5},{"c":"Vegetables","cr":"Legume","n":"Sweet potato","r":"Cartof dulce","k":86.0,"p":1.6,"f":0.1,"b":20.1,"i":3.0,"s":4.2},{"c":"Vegetables","cr":"Legume","n":"Swiss chard","r":"Sfeclă elvețiană","k":19.0,"p":1.8,"f":0.2,"b":3.7,"i":1.6,"s":1.1},{"c":"Vegetables","cr":"Legume","n":"Taro","r":"Taro","k":112.0,"p":1.5,"f":0.2,"b":26.5,"i":4.1,"s":0.4},{"c":"Vegetables","cr":"Legume","n":"Tomatillo","r":"Tomatillo","k":32.0,"p":1.0,"f":1.0,"b":5.8,"i":1.9,"s":3.9},{"c":"Vegetables","cr":"Legume","n":"Tomato","r":"Roșie","k":18.0,"p":0.9,"f":0.2,"b":3.9,"i":1.2,"s":2.6},{"c":"Vegetables","cr":"Legume","n":"Truffle (black)","r":"Trufe negre","k":92.0,"p":9.0,"f":0.5,"b":17.3,"i":0,"s":0},{"c":"Vegetables","cr":"Legume","n":"Truffle (white)","r":"Trufe albe","k":31.0,"p":2.0,"f":0.5,"b":4.0,"i":0,"s":0},{"c":"Vegetables","cr":"Legume","n":"Turnip","r":"Nap","k":28.0,"p":0.9,"f":0.1,"b":6.4,"i":1.8,"s":3.8},{"c":"Vegetables","cr":"Legume","n":"Turnip greens","r":"Frunze de nap","k":32.0,"p":3.0,"f":0.3,"b":7.0,"i":3.2,"s":0.8},{"c":"Vegetables","cr":"Legume","n":"Wakame seaweed","r":"Algă wakame","k":45.0,"p":3.0,"f":0.6,"b":9.1,"i":0.5,"s":0.5},{"c":"Vegetables","cr":"Legume","n":"Water chestnut","r":"Castane de apă","k":97.0,"p":1.4,"f":0.1,"b":23.9,"i":3.0,"s":4.8},{"c":"Vegetables","cr":"Legume","n":"Watercress","r":"Năsturel","k":11.0,"p":2.3,"f":0.1,"b":1.3,"i":0.5,"s":0.2},{"c":"Vegetables","cr":"Legume","n":"Wild garlic / Ramsons","r":"Leurda","k":29.0,"p":3.5,"f":0.1,"b":6.0,"i":1.9,"s":0},{"c":"Vegetables","cr":"Legume","n":"Yam","r":"Ignamă","k":118.0,"p":1.5,"f":0.2,"b":27.9,"i":4.1,"s":0.5},{"c":"Vegetables","cr":"Legume","n":"Zucchini","r":"Dovlecel","k":17.0,"p":1.2,"f":0.3,"b":3.1,"i":1.0,"s":2.5}];
+
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const CAT_COLORS = {
+  'Meat & Poultry':'#ff6b6b','Fish & Seafood':'#74b9ff',
+  'Vegetables':'#55efc4','Fruits':'#fd79a8',
+  'Dairy & Eggs':'#dfe6e9','Grains & Cereals':'#fdcb6e',
+  'Legumes':'#a8e6cf','Nuts & Seeds':'#e17055',
+  'Oils & Fats':'#ffeaa7','Baking & Pantry':'#b2bec3',
+  'Herbs & Spices':'#81ecec','Sweeteners':'#ff7675',
+  'Condiments & Sauces':'#fab1a0','Pasta & Bread':'#f0e68c',
+  'Plant Milks':'#dda0dd','Soy & Alternatives':'#98d8c8','Beverages':'#74b9ff',
+};
+
+const MACRO_LABELS = {
+  en: { protein:'Protein', fat:'Fat', carbs:'Carbs', fiber:'Fiber', sugar:'Sugar',
+        kcal:'Calories', per100:'per 100g', breakdown:'Macronutrient Breakdown' },
+  ro: { protein:'Proteine', fat:'Grăsimi', carbs:'Carbohidrați', fiber:'Fibre', sugar:'Zahăr',
+        kcal:'Calorii', per100:'per 100g', breakdown:'Detalii Macronutrienți' },
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let lang = 'en';
+let activeCategory = null;
+let sortBy = 'name';
+let query = '';
+let filtered = [];
+
+// ═══════════════════════════════════════
+// CANVAS BACKGROUND
+// ═══════════════════════════════════════
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let W, H;
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+
+function initParticles() {
+  particles = Array.from({length:40}, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    r: Math.random() * 1.5 + 0.3,
+    vx: (Math.random()-0.5)*0.15, vy: (Math.random()-0.5)*0.15,
+    alpha: Math.random()*0.3+0.05,
+    color: Math.random()>0.6 ? '#e8d5a0' : '#4ecdc4',
+  }));
+}
+
+function drawParticles() {
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color + Math.floor(p.alpha*255).toString(16).padStart(2,'0');
+    ctx.fill();
+    p.x += p.vx; p.y += p.vy;
+    if(p.x<0) p.x=W; if(p.x>W) p.x=0;
+    if(p.y<0) p.y=H; if(p.y>H) p.y=0;
+  });
+  requestAnimationFrame(drawParticles);
+}
+
+resizeCanvas(); initParticles(); drawParticles();
+window.addEventListener('resize', ()=>{ resizeCanvas(); initParticles(); });
+
+// ═══════════════════════════════════════
+// TICKER
+// ═══════════════════════════════════════
+function buildTicker() {
+  const sample = DB.filter((_,i)=>i%22===0).map(d => lang==='en' ? d.n : d.r);
+  const inner = document.getElementById('tickerInner');
+  const doubled = [...sample,...sample];
+  inner.innerHTML = doubled.map(n=>`<span class="ticker-item">${n}</span>`).join('');
+}
+
+// ═══════════════════════════════════════
+// FILTER CHIPS
+// ═══════════════════════════════════════
+const filterChips = document.getElementById('filterChips');
+const categories = [...new Set(DB.map(d=>d.c))].sort();
+
+function buildChips() {
+  filterChips.innerHTML = '';
+  const allChip = document.createElement('button');
+  allChip.className = 'chip' + (activeCategory===null?' active':'');
+  allChip.setAttribute('data-en','All');
+  allChip.setAttribute('data-ro','Toate');
+  allChip.textContent = lang==='en'?'All':'Toate';
+  allChip.addEventListener('click',()=>{ activeCategory=null; render(); });
+  filterChips.appendChild(allChip);
+
+  categories.forEach(cat=>{
+    const chip = document.createElement('button');
+    chip.className='chip'+(activeCategory===cat?' active':'');
+    const roName = DB.find(d=>d.c===cat)?.cr || cat;
+    chip.setAttribute('data-en', cat);
+    chip.setAttribute('data-ro', roName);
+    chip.textContent = lang==='en' ? cat : roName;
+    chip.style.setProperty('--chip-color', CAT_COLORS[cat]||'#888');
+    chip.addEventListener('click',()=>{
+      activeCategory = activeCategory===cat ? null : cat;
+      render();
+    });
+    filterChips.appendChild(chip);
+  });
+}
+
+// ═══════════════════════════════════════
+// LANGUAGE TOGGLE
+// ═══════════════════════════════════════
+const langToggle = document.getElementById('langToggle');
+document.querySelectorAll('[data-lang-btn]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    lang = btn.dataset.langBtn;
+    langToggle.dataset.lang = lang;
+    document.querySelectorAll('[data-lang-btn]').forEach(b=>b.classList.toggle('active',b.dataset.langBtn===lang));
+    applyLang();
+    buildTicker();
+    render();
+  });
+});
+
+function applyLang() {
+  // Static labels
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    if(el.tagName==='INPUT') {
+      el.placeholder = el.getAttribute(`data-placeholder-${lang}`) || el.getAttribute('data-en');
+    } else if(!el.closest('.chip') && !el.closest('.sort-btn')) {
+      el.textContent = el.getAttribute(`data-${lang}`);
+    }
+  });
+  // Search placeholder
+  const si = document.getElementById('searchInput');
+  si.placeholder = si.getAttribute(`data-placeholder-${lang}`);
+  // Sort buttons
+  document.querySelectorAll('.sort-btn').forEach(b=>{
+    if(b.dataset[lang]) b.textContent = b.dataset[lang];
+  });
+  // Rebuild chips with translated names
+  buildChips();
+}
+
+// ═══════════════════════════════════════
+// SORT
+// ═══════════════════════════════════════
+document.querySelectorAll('.sort-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    sortBy = btn.dataset.sort;
+    render();
+  });
+});
+
+// ═══════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════
+const searchInput = document.getElementById('searchInput');
+const clearBtn = document.getElementById('clearBtn');
+
+// Strip diacritics: ș→s, ț→t, î→i, â→a, ă→a, etc.
+function norm(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+
+// Pre-compute normalized search fields once at startup
+DB.forEach(d=>{
+  d._sn = norm(d.n);
+  d._sr = norm(d.r);
+  d._sc = norm(d.c);
+  d._scr = norm(d.cr||'');
+});
+
+searchInput.addEventListener('input',()=>{
+  query = norm(searchInput.value.trim());
+  clearBtn.classList.toggle('visible', query.length>0);
+  render();
+});
+clearBtn.addEventListener('click',()=>{
+  searchInput.value=''; query='';
+  clearBtn.classList.remove('visible');
+  render(); searchInput.focus();
+});
+
+// ═══════════════════════════════════════
+// FILTER + SORT
+// ═══════════════════════════════════════
+function getFiltered() {
+  let res = DB;
+  if(activeCategory) res=res.filter(d=>d.c===activeCategory);
+  if(query) res=res.filter(d=>
+    d._sn.includes(query)||
+    d._sr.includes(query)||
+    d._sc.includes(query)||
+    d._scr.includes(query)
+  );
+  res=[...res];
+  if(sortBy==='name') res.sort((a,b)=>{
+    const an=lang==='en'?a.n:a.r, bn=lang==='en'?b.n:b.r;
+    return an.localeCompare(bn);
+  });
+  else if(sortBy==='kcal') res.sort((a,b)=>b.k-a.k);
+  else if(sortBy==='protein') res.sort((a,b)=>b.p-a.p);
+  else if(sortBy==='fat') res.sort((a,b)=>b.f-a.f);
+  else if(sortBy==='carbs') res.sort((a,b)=>b.b-a.b);
+  return res;
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+const grid = document.getElementById('resultsGrid');
+const L = ()=>MACRO_LABELS[lang];
+
+// IntersectionObserver for bar animations
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in-view'); });
+},{threshold:0.1});
+
+function render() {
+  filtered = getFiltered();
+  const cnt = filtered.length;
+
+  // Update count
+  document.getElementById('countNum').textContent = cnt.toLocaleString();
+
+  if(cnt===0) {
+    grid.innerHTML=`<div class="empty-state">
+      <div class="empty-icon">∅</div>
+      <div class="empty-text">${lang==='en'?'No ingredients found — try a different search':'Niciun ingredient găsit — încearcă altceva'}</div>
+    </div>`;
+    return;
+  }
+
+  const toShow = filtered.slice(0,200);
+  const frag = document.createDocumentFragment();
+
+  toShow.forEach((item,i)=>{
+    const col=CAT_COLORS[item.c]||'#888';
+    const mx=Math.max(item.p,item.f,item.b,1);
+    const name = lang==='en' ? item.n : item.r;
+    const nameAlt = lang==='en' ? item.r : item.n;
+    const catName = lang==='en' ? item.c : (item.cr||item.c);
+    const delay = Math.min(i*0.018,0.35);
+
+    const card = document.createElement('div');
+    card.className='card';
+    card.style.cssText=`--cat-color:${col};animation-delay:${delay}s`;
+    card.innerHTML=`
+      <div class="card-cat">${catName}</div>
+      <div class="card-name">${name}</div>
+      <div class="card-name-ro">${nameAlt!==name?nameAlt:'&nbsp;'}</div>
+      <div class="card-kcal-row">
+        <div class="card-kcal">${item.k}</div>
+        <span class="card-kcal-unit">kcal</span>
+      </div>
+      <div class="card-kcal-label">${lang==='en'?'per 100g':'per 100g'}</div>
+      <div class="macro-bars">
+        ${mBar(L().protein, item.p, mx, '#4ecdc4', 0.08)}
+        ${mBar(L().fat,     item.f, mx, '#ffe66d', 0.14)}
+        ${mBar(L().carbs,   item.b, mx, '#a8e6cf', 0.20)}
+        ${mBar(L().fiber,   item.i, mx, '#c3b1e1', 0.26)}
+      </div>`;
+    card.addEventListener('click',()=>openModal(DB.indexOf(item)));
+    observer.observe(card);
+    frag.appendChild(card);
+  });
+
+  grid.innerHTML='';
+  grid.appendChild(frag);
+
+  if(filtered.length>200){
+    const more=document.createElement('div');
+    more.style.cssText='grid-column:1/-1;text-align:center;padding:28px;font-family:DM Mono,monospace;font-size:10px;color:var(--text4);letter-spacing:.18em;text-transform:uppercase';
+    more.textContent=`+ ${(filtered.length-200).toLocaleString()} ${lang==='en'?'more — refine your search':'mai multe — restrânge căutarea'}`;
+    grid.appendChild(more);
+  }
+}
+
+function mBar(label,val,max,color,delay) {
+  const w=Math.min(Math.max(val/max*100,0),100);
+  return `<div class="macro-row">
+    <span class="macro-label">${label}</span>
+    <div class="macro-bar-track">
+      <div class="macro-bar-fill" style="--bar-color:${color};width:${w}%;--bar-delay:${delay}s"></div>
+    </div>
+    <span class="macro-val">${val}g</span>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════
+const modalOverlay = document.getElementById('modalOverlay');
+const modalClose   = document.getElementById('modalClose');
+
+// Animated number counter
+function animateNum(el, target, duration=600) {
+  const start = performance.now();
+  const from = parseFloat(el.textContent)||0;
+  function step(now) {
+    const t = Math.min((now-start)/duration,1);
+    const ease = 1-Math.pow(1-t,3);
+    el.textContent = Math.round(from+(target-from)*ease);
+    if(t<1) requestAnimationFrame(step);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(step);
+}
+
+function openModal(idx) {
+  const item = DB[idx];
+  const col = CAT_COLORS[item.c]||'#888';
+  const l = L();
+  const name = lang==='en' ? item.n : item.r;
+  const nameAlt = lang==='en' ? item.r : item.n;
+  const catName = lang==='en' ? item.c : (item.cr||item.c);
+
+  document.getElementById('mGlow').style.background=col;
+  document.getElementById('mCat').textContent=catName;
+  document.getElementById('mCat').style.setProperty('--cat-color',col);
+  document.getElementById('mName').textContent=name;
+  document.getElementById('mNameRo').textContent=nameAlt!==name?nameAlt:'';
+
+  // Animate kcal
+  const mKcal = document.getElementById('mKcal');
+  const chartKcal = document.getElementById('chartKcal');
+  mKcal.textContent='0';
+  chartKcal.textContent='0';
+
+  modalOverlay.classList.add('open');
+  document.body.style.overflow='hidden';
+
+  requestAnimationFrame(()=>{
+    animateNum(mKcal, item.k, 700);
+    animateNum(chartKcal, item.k, 700);
+  });
+
+  // Donut arcs
+  const circ=2*Math.PI*50;
+  const total=item.p*4+item.f*9+item.b*4;
+  const arcP=document.getElementById('arcP');
+  const arcF=document.getElementById('arcF');
+  const arcC=document.getElementById('arcC');
+
+  [arcP,arcF,arcC].forEach(a=>{
+    a.style.transition='none';
+    a.style.strokeDasharray='0 '+circ;
+    a.style.strokeDashoffset='0';
+  });
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      let off=0;
+      function arc(el,val,kcalPer){
+        const frac=total>0?(val*kcalPer)/total:0;
+        const dash=frac*circ;
+        el.style.transition='stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)';
+        el.style.strokeDasharray=`${dash} ${circ-dash}`;
+        el.style.strokeDashoffset=String(-off);
+        off+=dash;
+      }
+      arc(arcP,item.p,4);
+      arc(arcF,item.f,9);
+      arc(arcC,item.b,4);
+    });
+  });
+
+  // Legend
+  const macros=[
+    {key:l.protein, val:item.p, kcalPer:4, color:'#4ecdc4'},
+    {key:l.fat,     val:item.f, kcalPer:9, color:'#ffe66d'},
+    {key:l.carbs,   val:item.b, kcalPer:4, color:'#a8e6cf'},
+    {key:l.fiber,   val:item.i, kcalPer:2, color:'#c3b1e1'},
+    {key:l.sugar,   val:item.s, kcalPer:4, color:'#ff9eb5'},
+  ];
+  document.getElementById('macroLegend').innerHTML=macros.map(m=>{
+    const pct=total>0?Math.round(m.val*m.kcalPer/total*100):0;
+    return `<div class="legend-row">
+      <div class="legend-dot" style="background:${m.color}"></div>
+      <span class="legend-name">${m.key}</span>
+      <span class="legend-g">${m.val}g</span>
+      <span class="legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  // Tiles
+  const t=[
+    {label:l.protein,val:item.p,color:'#4ecdc4',td:'0s'},
+    {label:l.fat,    val:item.f,color:'#ffe66d',td:'0.08s'},
+  ];
+  const tb=[
+    {label:l.carbs,val:item.b,color:'#a8e6cf',td:'0.16s'},
+    {label:l.fiber, val:item.i,color:'#c3b1e1',td:'0.24s'},
+  ];
+  const makeTile=x=>`<div class="macro-tile" style="--tile-color:${x.color};--td:${x.td}">
+    <div class="tile-label">${x.label}</div>
+    <div class="tile-val" style="color:${x.color}">${x.val}<span class="tile-unit"> g</span></div>
+    <div class="tile-pct">${l.per100}</div>
+  </div>`;
+
+  document.getElementById('tilesTop').innerHTML=t.map(makeTile).join('');
+  document.getElementById('tilesBottom').innerHTML=tb.map(makeTile).join('');
+
+  // Progress bars
+  document.querySelector('.progress-title').textContent=l.breakdown;
+  const progressMax=Math.max(item.p,item.f,item.b,item.i,1);
+  const bars=[
+    {label:l.protein,val:item.p,max:progressMax,c:'#4ecdc4',c2:'#4ecdc4',pd:'0.1s'},
+    {label:l.fat,    val:item.f,max:progressMax,c:'#ffe66d',c2:'#fdcb6e',pd:'0.2s'},
+    {label:l.carbs,  val:item.b,max:progressMax,c:'#a8e6cf',c2:'#55efc4',pd:'0.3s'},
+    {label:l.fiber,  val:item.i,max:progressMax,c:'#c3b1e1',c2:'#dda0dd',pd:'0.4s'},
+    {label:l.sugar,  val:item.s,max:progressMax,c:'#ff9eb5',c2:'#ff7675',pd:'0.5s'},
+  ];
+  document.getElementById('progressBars').innerHTML=bars.map(b=>{
+    const w=Math.min(b.val/b.max*100,100);
+    return `<div class="prog-row">
+      <span class="prog-label">${b.label}</span>
+      <div class="prog-track">
+        <div class="prog-fill" style="--prog-color:${b.c};--prog-color2:${b.c2};width:${w}%;--pd:${b.pd}"></div>
+      </div>
+      <span class="prog-val">${b.val}g</span>
+    </div>`;
+  }).join('');
+
+  // Scroll modal to top
+  document.getElementById('modalCard').scrollTop=0;
+}
+
+function closeModal() {
+  modalOverlay.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+modalClose.addEventListener('click',closeModal);
+modalOverlay.addEventListener('click',e=>{ if(e.target===modalOverlay)closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+buildChips();
+buildTicker();
+render();
+</script>
+</body>
+</html>
